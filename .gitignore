@@ -1,0 +1,21 @@
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.zip
+
+# IntelliJ
+.idea/
+*.iml
+out/
+
+# Docker & Config
+.env
+*.log
+nginx/logs/
+
+# Sistema
+.DS_Store
+mvnw
+Thumbs.db

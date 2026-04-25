@@ -1,0 +1,10 @@
+services:
+  # Aplicación Spring Boot (blue-deploy)
+  app:
+    build: .
+    container_name: blue-app
+    restart: always
+    # Exponemos el 8080 para que puedas testear desde la VM de Windows directamente
+    ports:
+      - "8080:8080"
+
