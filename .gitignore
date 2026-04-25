@@ -12,8 +12,10 @@ out/
 
 # Docker & Config
 .env
+.TokenAccess
 *.log
-nginx/logs/
+nginx/
+logs/
 
 # Sistema
 .DS_Store
