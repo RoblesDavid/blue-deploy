@@ -1,13 +1,13 @@
-package com.blue_deploy.demo;
+package com.roblesdavid.blue_deploy;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class DemoApplication {
+public class BlueDeployApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DemoApplication.class, args);
+		SpringApplication.run(BlueDeployApplication.class, args);
 	}
 
 }
