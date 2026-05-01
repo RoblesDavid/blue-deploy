@@ -6,6 +6,8 @@ import com.roblesdavid.blue_deploy.model.Check;
 import com.roblesdavid.blue_deploy.repository.CheckRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Servicio encargado de la lógica de negocio de los checks.
  */
@@ -24,5 +26,9 @@ public class CheckService {
     public void processCheck(CheckRequestDTO dto) {
         Check check = CheckMapper.toEntity(dto);
         repository.save(check);
+    }
+
+    public List<Check> getAllChecks() {
+        return repository.findAll();
     }
 }

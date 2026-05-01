@@ -11,6 +11,8 @@ export async function sendCheck(data) {
     },
     body: JSON.stringify(data),
   });
-
-  return await res.text();
 }
+  export async function getChecks() {
+    const res = await fetch(API_URL);
+    return await res.json();
+  }
