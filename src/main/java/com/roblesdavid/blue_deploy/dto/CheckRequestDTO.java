@@ -1,5 +1,6 @@
 package com.roblesdavid.blue_deploy.dto;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -11,15 +12,8 @@ import jakarta.validation.constraints.Pattern;
  */
 public class CheckRequestDTO {
 
-    /**
-     * Fecha en formato ISO básico: yyyy-MM-dd HH:mm:ss
-     */
-    @NotBlank(message = "date no puede estar vacío")
-    @Pattern(
-            regexp = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$",
-            message = "Formato de fecha inválido (yyyy-MM-dd HH:mm:ss)"
-    )
-    private String date;
+
+    private OffsetDateTime date;
 
     @NotBlank(message = "use no puede estar vacío")
     private String user;
@@ -29,11 +23,13 @@ public class CheckRequestDTO {
     private Map<String, Object> checks;
 
     //Getter & Setter
-    public String getDate() {
+
+
+    public OffsetDateTime getDate() {
         return date;
     }
 
-    public void setDate(String date) {
+    public void setDate(OffsetDateTime date) {
         this.date = date;
     }
 

@@ -18,7 +18,7 @@ public class CheckMapper {
         check.setUser(dto.getUser());
 
         // Convertimos String → LocalDateTime de forma controlada
-        check.setCreatedAt(LocalDateTime.parse(dto.getDate().replace(" ", "T")));
+        check.setCreatedAt(dto.getDate().toLocalDateTime());
 
         check.setRawJson(dto.getChecks().toString());
 
