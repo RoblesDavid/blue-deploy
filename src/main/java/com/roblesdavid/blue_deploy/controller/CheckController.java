@@ -1,6 +1,7 @@
 package com.roblesdavid.blue_deploy.controller;
 
 import com.roblesdavid.blue_deploy.dto.CheckRequestDTO;
+import com.roblesdavid.blue_deploy.dto.CheckResponseDTO;
 import com.roblesdavid.blue_deploy.model.Check;
 import com.roblesdavid.blue_deploy.service.CheckService;
 import jakarta.validation.Valid;
@@ -22,13 +23,18 @@ public class CheckController {
         this.service = service;
     }
 
+    @GetMapping
+    public List<CheckResponseDTO> getAllChecks() {
+        return service.getAllChecks();
+    }
+
     /**
      * GET → devuelve los checks para el frontend
-     */
+     *
     @GetMapping
     public List<Check> getAllChecks(){
         return service.getAllChecks();
-    }
+    }*/
 
     /**
      * POST → recibe checks

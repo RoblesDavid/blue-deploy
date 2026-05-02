@@ -19,6 +19,9 @@ public class Check {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name ="firewall_enabled")
+    private Boolean firewallEnabled;
+
     @Column(name = "raw_json", columnDefinition = "TEXT")
     private String rawJson;
 
@@ -33,6 +36,14 @@ public class Check {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public Boolean getFirewallEnabled() {
+        return firewallEnabled;
+    }
+
+    public void setFirewallEnabled(Boolean firewallEnabled) {
+        this.firewallEnabled = firewallEnabled;
+    }
 
     public String getRawJson() { return rawJson; }
     public void setRawJson(String rawJson) { this.rawJson = rawJson; }

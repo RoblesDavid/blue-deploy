@@ -4,7 +4,6 @@ import java.time.OffsetDateTime;
 import java.util.Map;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 /**
  * DTO de entrada para recibir checks del sistema.
@@ -23,7 +22,6 @@ public class CheckRequestDTO {
     private Map<String, Object> checks;
 
     //Getter & Setter
-
 
     public OffsetDateTime getDate() {
         return date;

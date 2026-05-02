@@ -1,6 +1,7 @@
 package com.roblesdavid.blue_deploy.service;
 
 import com.roblesdavid.blue_deploy.dto.CheckRequestDTO;
+import com.roblesdavid.blue_deploy.dto.CheckResponseDTO;
 import com.roblesdavid.blue_deploy.mapper.CheckMapper;
 import com.roblesdavid.blue_deploy.model.Check;
 import com.roblesdavid.blue_deploy.repository.CheckRepository;
@@ -28,7 +29,10 @@ public class CheckService {
         repository.save(check);
     }
 
-    public List<Check> getAllChecks() {
-        return repository.findAll();
+    public List<CheckResponseDTO> getAllChecks() {
+        return repository.findAll()
+                .stream()
+                .map(CheckMapper::toDTO)
+                .toList();
     }
 }
