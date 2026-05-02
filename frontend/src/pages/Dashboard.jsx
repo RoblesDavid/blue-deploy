@@ -4,42 +4,43 @@ import { sendCheck, getChecks } from "../services/api";
 function Dashboard() {
   const [checks, setChecks] = useState([]);
   const [status, setStatus] = useState("Idle");
-  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("ALL");
 
-  // 🔥 Cargar checks desde backend
   async function loadChecks() {
     try {
-      setLoading(true);
       const data = await getChecks();
 
-      // ✔ Backend manda datos ya procesados → no parseamos JSON
-      setChecks(data);
+      const mapped = data.map((check) => {
+        let state = "UNKNOWN";
 
+        if (check.firewallEnabled === true) state = "ON";
+        else if (check.firewallEnabled === false) state = "OFF";
+
+        return {
+          ...check,
+          firewallState: state,
+        };
+      });
+
+      setChecks(mapped);
     } catch (error) {
       console.error("Error cargando checks:", error);
-      setStatus("Error cargando datos");
-    } finally {
-      setLoading(false);
     }
   }
 
-  // 🔁 Auto-refresh
   useEffect(() => {
     loadChecks();
-
     const interval = setInterval(loadChecks, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
-  // 📤 Enviar nuevo check
   async function handleSend() {
     setStatus("Enviando...");
 
     const payload = {
       date: new Date().toISOString(),
-      user: "frontend-user",
-      hostname: "frontend-host",
+      user: "soc-analyst",
+      hostname: "frontend-node",
       checks: {
         firewall_enabled: Math.random() > 0.5,
       },
@@ -51,29 +52,20 @@ function Dashboard() {
       loadChecks();
     } catch (error) {
       console.error(error);
-      setStatus("Error al enviar");
+      setStatus("Error");
     }
   }
 
-  // 🎨 Render estado firewall (estilo SOC)
-  function renderFirewallBadge(value) {
-    let label = "UNKNOWN";
-    let color = "#d29922"; // warning
+  // 🔎 FILTRO
+  const filteredChecks =
+    filter === "ALL"
+      ? checks
+      : checks.filter((c) => c.firewallState === filter);
 
-    if (value === true) {
-      label = "ON";
-      color = "#238636"; // verde
-    } else if (value === false) {
-      label = "OFF";
-      color = "#da3633"; // rojo
-    }
-
-    return (
-      <span style={{ ...styles.badge, backgroundColor: color }}>
-        {label}
-      </span>
-    );
-  }
+  // 📊 MÉTRICAS
+  const total = checks.length;
+  const alerts = checks.filter((c) => c.firewallState === "OFF").length;
+  const unknown = checks.filter((c) => c.firewallState === "UNKNOWN").length;
 
   return (
     <div style={styles.container}>
@@ -85,8 +77,22 @@ function Dashboard() {
 
       <p>{status}</p>
 
-      {loading && <p>Cargando datos...</p>}
+      {/* 📊 PANEL MÉTRICAS */}
+      <div style={styles.metrics}>
+        <div>Total: {total}</div>
+        <div style={{ color: "#da3633" }}>Alertas: {alerts}</div>
+        <div style={{ color: "#d29922" }}>Unknown: {unknown}</div>
+      </div>
 
+      {/* 🔎 FILTROS */}
+      <div style={styles.filters}>
+        <button onClick={() => setFilter("ALL")}>ALL</button>
+        <button onClick={() => setFilter("ON")}>ON</button>
+        <button onClick={() => setFilter("OFF")}>OFF</button>
+        <button onClick={() => setFilter("UNKNOWN")}>UNKNOWN</button>
+      </div>
+
+      {/* 📋 TABLA */}
       <table style={styles.table}>
         <thead>
           <tr>
@@ -98,22 +104,52 @@ function Dashboard() {
           </tr>
         </thead>
         <tbody>
-          {checks.map((check) => (
-            <tr key={check.id}>
+          {filteredChecks.map((check) => (
+            <tr
+              key={check.id}
+              style={
+                check.firewallState === "OFF"
+                  ? styles.rowAlert
+                  : undefined
+              }
+            >
               <td>{check.id}</td>
               <td>{check.hostname}</td>
               <td>{check.user}</td>
               <td>{check.date}</td>
-              <td>{renderFirewallBadge(check.firewallEnabled)}</td>
+              <td>
+                <span
+                  style={{
+                    ...styles.badge,
+                    backgroundColor:
+                      check.firewallState === "ON"
+                        ? "#238636"
+                        : check.firewallState === "OFF"
+                        ? "#da3633"
+                        : "#d29922",
+                  }}
+                >
+                  {check.firewallState}
+                </span>
+              </td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* 🕒 TIMELINE SIMPLE */}
+      <h2 style={{ marginTop: "40px" }}>🕒 Timeline</h2>
+      <ul style={styles.timeline}>
+        {checks.slice(0, 10).map((c) => (
+          <li key={c.id}>
+            [{c.date}] {c.hostname} → {c.firewallState}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-// 🎨 Estilos SOC
 const styles = {
   container: {
     backgroundColor: "#0d1117",
@@ -133,16 +169,30 @@ const styles = {
     cursor: "pointer",
     marginBottom: "20px",
   },
+  metrics: {
+    display: "flex",
+    gap: "20px",
+    marginBottom: "20px",
+    fontWeight: "bold",
+  },
+  filters: {
+    marginBottom: "20px",
+  },
   table: {
     width: "100%",
     borderCollapse: "collapse",
-    marginTop: "20px",
   },
   badge: {
     padding: "5px 10px",
     borderRadius: "5px",
     color: "white",
     fontWeight: "bold",
+  },
+  rowAlert: {
+    backgroundColor: "#2d1111",
+  },
+  timeline: {
+    marginTop: "10px",
   },
 };
 
