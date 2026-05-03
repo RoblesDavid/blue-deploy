@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { sendCheck, getChecks } from "../services/api";
+import StatsChart from "../components/StatsChart"
 
 function Dashboard() {
   const [checks, setChecks] = useState([]);
@@ -91,6 +92,10 @@ function Dashboard() {
         <button onClick={() => setFilter("OFF")}>OFF</button>
         <button onClick={() => setFilter("UNKNOWN")}>UNKNOWN</button>
       </div>
+
+
+      {/* 📊 GRÁFICA */}
+      <StatsChart checks={checks} />
 
       {/* 📋 TABLA */}
       <table style={styles.table}>
@@ -195,5 +200,4 @@ const styles = {
     marginTop: "10px",
   },
 };
-
 export default Dashboard;

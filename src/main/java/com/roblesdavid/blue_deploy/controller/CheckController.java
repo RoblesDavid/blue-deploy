@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controller: capa HTTP pura.
@@ -23,18 +24,13 @@ public class CheckController {
         this.service = service;
     }
 
+    /**
+     * GET → devuelve los checks para el frontend
+     */
     @GetMapping
     public List<CheckResponseDTO> getAllChecks() {
         return service.getAllChecks();
     }
-
-    /**
-     * GET → devuelve los checks para el frontend
-     *
-    @GetMapping
-    public List<Check> getAllChecks(){
-        return service.getAllChecks();
-    }*/
 
     /**
      * POST → recibe checks
@@ -45,6 +41,19 @@ public class CheckController {
         return "Guardado correctamente";
     }
 
+    /**
+     * Login simple (mock)
+     */
+    @PostMapping("/login")
+    public String login(@RequestBody Map<String, String> body) {
+
+        if ("admin".equals(body.get("user")) &&
+                "admin".equals(body.get("password"))) {
+            return "TOKEN_OK";
+        }
+
+        throw new RuntimeException("Unauthorized");
+    }
 
     /**
      * Healthcheck separado (best practice)

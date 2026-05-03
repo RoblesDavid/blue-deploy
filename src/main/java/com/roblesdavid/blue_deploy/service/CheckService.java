@@ -16,9 +16,12 @@ import java.util.List;
 public class CheckService {
 
     private final CheckRepository repository;
+    private final AlertService alertService;
 
-    public CheckService(CheckRepository repository) {
+    public CheckService(CheckRepository repository, AlertService alertService) {
+
         this.repository = repository;
+        this.alertService=alertService;
     }
 
     /**
@@ -27,8 +30,14 @@ public class CheckService {
     public void processCheck(CheckRequestDTO dto) {
         Check check = CheckMapper.toEntity(dto);
         repository.save(check);
+
+        //Análisis automático
+        alertService.analyze(check);
     }
 
+    /**
+     * Devuelve todos los checks para el frontend.
+     */
     public List<CheckResponseDTO> getAllChecks() {
         return repository.findAll()
                 .stream()

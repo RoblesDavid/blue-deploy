@@ -6,6 +6,8 @@ import com.roblesdavid.blue_deploy.dto.CheckRequestDTO;
 import com.roblesdavid.blue_deploy.dto.CheckResponseDTO;
 import com.roblesdavid.blue_deploy.model.Check;
 
+import java.util.Map;
+
 public class CheckMapper {
 
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -18,22 +20,18 @@ public class CheckMapper {
         check.setUser(dto.getUser());
         check.setCreatedAt(dto.getDate().toLocalDateTime());
 
-        // 🔥 Parse seguro
-        Boolean firewall = null;
+        Map<String, Object> c = dto.getChecks();
 
-        if (dto.getChecks() != null) {
-            Object value = dto.getChecks().get("firewall_enabled");
-
-            if (value instanceof Boolean) {
-                firewall = (Boolean) value;
-            } else if (value instanceof String) {
-                firewall = Boolean.parseBoolean((String) value);
-            }
+        if (c != null) {
+            check.setFirewallEnabled(parseBool(c.get("firewall_enabled")));
+            check.setAntivirusEnabled(parseBool(c.get("antivirus_enabled")));
+            check.setDiskEncrypted(parseBool(c.get("disk_encrypted")));
+            check.setUpdatesEnabled(parseBool(c.get("updates_enabled")));
         }
 
-        check.setFirewallEnabled(firewall);
+        check.setRawJson(c != null ? c.toString() : null);
 
-        // 🔥 JSON correcto
+        //JSON correcto
         try {
             check.setRawJson(mapper.writeValueAsString(dto.getChecks()));
         } catch (JsonProcessingException e) {
@@ -50,11 +48,19 @@ public class CheckMapper {
         dto.id = check.getId();
         dto.hostname = check.getHostname();
         dto.user = check.getUser();
-        dto.date = check.getCreatedAt() != null
-                ? check.getCreatedAt().toString()
-                : null;
+        dto.date = check.getCreatedAt().toString();
+
         dto.firewallEnabled = check.getFirewallEnabled();
+        dto.antivirusEnabled = check.getAntivirusEnabled();
+        dto.diskEncrypted = check.getDiskEncrypted();
+        dto.updatesEnabled = check.getUpdatesEnabled();
 
         return dto;
+    }
+
+    private static Boolean parseBool(Object value) {
+        if (value instanceof Boolean) return (Boolean) value;
+        if (value instanceof String) return Boolean.parseBoolean((String) value);
+        return null;
     }
 }
