@@ -55,6 +55,7 @@ Automatizar el despliegue de equipos Windows mediante OSDCloud y validar su esta
 PowerShell → API REST → Service → DB → Dashboard
 
 📊 Ejemplo de check
+
 {
   "date": "2026-05-01T16:22:03.367Z",
   "user": "soc-analyst",
@@ -69,6 +70,7 @@ PowerShell → API REST → Service → DB → Dashboard
 ```bash
 docker compose build
 docker compose up
+```
 
 ## 📌 Roadmap (resumen)
 
