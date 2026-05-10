@@ -117,10 +117,9 @@ BlueDeploy se orienta a defensa y monitorización mediante:
 ## Ejecución local
 
 
-```bash
- docker compose build 
- docker compose up
- ``` 
+bash docker compose build docker compose up
+
+
 
 ---
 
@@ -151,16 +150,18 @@ BlueDeploy se orienta a defensa y monitorización mediante:
 - [ ] Hardening del despliegue en Hetzner.
 
 ---
-## 📚 Documentación
+
+## Documentación
 
 La documentación técnica del proyecto se encuentra en la carpeta:
 
 ```text
  notes/
- ```
-
+ 
+ ```  
 Estas notas están pensadas para ser consultadas desde Obsidian y servir como base para el informe final en PDF.
 
 ---
 
 Proyecto desarrollado como parte de formación en Ciberseguridad e Inteligencia Artificial.
+
