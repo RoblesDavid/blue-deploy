@@ -1,4 +1,8 @@
 package com.roblesdavid.blue_deploy.model;
 
-public class ComplianceStatus {
+public enum ComplianceStatus {
+    PENDING,
+    COMPLIANT,
+    NON_COMPLIANT,
+    UNKNOWN
 }
