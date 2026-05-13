@@ -57,4 +57,13 @@ public class DeploymentService {
 
         return DeploymentMapper.toDTO(deployment);
     }
+
+    public Deployment getDeploymentEntityByDeploymentId(String deploymentId) {
+        return repository.findByDeploymentId(deploymentId)
+                .orElseThrow(() -> new IllegalArgumentException("Deployment no encontrado: " + deploymentId));
+    }
+
+    public Deployment saveDeployment(Deployment deployment) {
+        return repository.save(deployment);
+    }
 }

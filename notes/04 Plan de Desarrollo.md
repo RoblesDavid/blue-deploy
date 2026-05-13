@@ -22,22 +22,12 @@ Objetivo:
 
 Crear el modelo base para registrar despliegues.
 
-Tareas:
+Resultado:
 
-- Crear Deployment
-- Crear DeploymentStatus
-- Crear ComplianceStatus
-- Crear DeploymentRepository
-- Crear DeploymentRequestDTO
-- Crear DeploymentResponseDTO
-- Crear DeploymentService
-- Crear DeploymentController
-
-Endpoints:
-
-- POST /api/deployments
-- GET /api/deployments
-- GET /api/deployments/{id}
+- Entidad Deployment creada.
+- Estados DeploymentStatus y ComplianceStatus creados.
+- API REST para crear y consultar despliegues.
+- Evidencia registrada en [[notes/08-evidencias.md]].
 
 ---
 
@@ -47,19 +37,40 @@ Objetivo:
 
 Registrar cada fase del despliegue enviada desde PowerShell.
 
-Tareas:
+Tareas completadas:
 
-- Crear DeploymentStep
-- Crear StepStatus
-- Crear DeploymentStepRepository
-- Crear DeploymentStepRequestDTO
-- Crear DeploymentStepResponseDTO
-- Crear DeploymentStepService
-- Crear endpoint para registrar fases
+- DeploymentStep creado.
+- StepStatus creado.
+- DeploymentStepRepository creado.
+- DeploymentStepRequestDTO creado.
+- DeploymentStepResponseDTO creado.
+- DeploymentStepService creado.
+- DeploymentStepController creado.
+- Actualización automática de currentStep.
+- Actualización automática de lastSeenAt.
+- Cambio automático a DOMAIN_JOINED tras DOMAIN_JOIN correcto.
+- Cambio automático a POST_DOMAIN_PENDING tras GPUPDATE correcto.
+- Cambio automático a FAILED ante cualquier fase fallida.
+
+Endpoints implementados:
+
+- POST /api/deployments/{deploymentId}/steps
+- GET /api/deployments/{deploymentId}/steps
 
 Endpoint:
 
 - POST /api/deployments/{deploymentId}/steps
+- GET /api/deployments/{deploymentId}/steps
+- Estados automáticos iniciales:
+
+- DOMAIN_JOIN + SUCCESS → DOMAIN_JOINED
+- GPUPDATE + SUCCESS → POST_DOMAIN_PENDING
+- FINAL_SECURITY_VALIDATION + SUCCESS → COMPLETED
+- Cualquier fase + FAILED → FAILED
+
+Resultado:
+
+BlueDeploy puede registrar el progreso de un despliegue OSDCloud por fases y consultar el histórico de pasos de cada equipo.
 
 ---
 
@@ -81,6 +92,14 @@ Tareas:
 Endpoint:
 
 - POST /api/deployments/{deploymentId}/checks
+
+Checks iniciales:
+
+- FIREWALL_ENABLED
+- WSUS_CONFIGURED
+- CROWDSTRIKE_VALIDATED
+- MICROCLAUDIA_VALIDATED
+- LOCAL_ADMIN_VALIDATED
 
 ---
 

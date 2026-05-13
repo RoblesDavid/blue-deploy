@@ -1,8 +1,6 @@
 
 Este archivo recogerá evidencias para el informe final.
 
-## Evidencia 1 - Creación del proyecto
-
 ## Evidencia - Sprint 1: API de Deployment
 
 Fecha: 2026-05-11  
@@ -74,9 +72,147 @@ BlueDeploy ya puede registrar el inicio de un despliegue Windows corporativo, al
 
 ![[Pasted image 20260511210047.png]]
 
-## Evidencia 2 - Backend Spring Boot funcionando
+## Evidencia 2 - Sprint 2: Registro de fases DeploymentStep
 
-Pendiente de añadir captura.
+Fecha: 2026-05-11  
+Rama: feature/deployment-steps
+
+### Objetivo
+
+Validar que BlueDeploy puede registrar fases del despliegue OSDCloud asociadas a un Deployment existente.
+
+### Endpoints probados
+
+- POST /api/deployments/{deploymentId}/steps
+- GET /api/deployments/{deploymentId}/steps
+- GET /api/deployments/{deploymentId}
+
+### Prueba 1 - Registrar fase DRIVER_INSTALLATION
+
+Comando ejecutado:
+
+```bash
+curl -X POST http://localhost:8080/api/deployments/DEPLOY-PC002-20260511/steps \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stepName": "DRIVER_INSTALLATION",
+    "stepStatus": "SUCCESS",
+    "message": "Drivers installed successfully",
+    "errorCode": null,
+    "rawOutput": "Detected model: Dell Latitude 5440. Driver package installed."
+  }'
+```
+Resultado esperado:
+
+```json
+{
+  "deploymentId": "DEPLOY-PC002-20260511",
+  "stepName": "DRIVER_INSTALLATION",
+  "stepStatus": "SUCCESS",
+  "message": "Drivers installed successfully"
+}
+
+```
+
+
+![[Pasted image 20260513210231.png]]
+### Prueba 2 - Registrar fase DOMAIN_JOIN
+
+Comando ejecutado:
+
+```bash
+curl -X POST http://localhost:8080/api/deployments/DEPLOY-PC002-20260511/steps \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stepName": "DOMAIN_JOIN",
+    "stepStatus": "SUCCESS",
+    "message": "Device joined to corporate domain successfully",
+    "errorCode": null,
+    "rawOutput": "Domain join completed."
+  }'
+   ```
+Resultado esperado:
+El Deployment debe actualizarse a:
+```json
+{
+"currentStep": "DOMAIN_JOIN",
+"deploymentStatus": "DOMAIN_JOINED"
+}
+```
+
+### Prueba 3 - Registrar fase GPUPDATE
+Comando ejecutado:
+
+```bash
+curl -X POST http://localhost:8080/api/deployments/DEPLOY-PC002-20260511/steps \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stepName": "GPUPDATE",
+    "stepStatus": "SUCCESS",
+    "message": "Group policies applied successfully",
+    "errorCode": null,
+    "rawOutput": "gpupdate /force completed."
+  }'
+  ```
+Resultado esperado:
+El Deployment debe actualizarse a:
+```json
+{
+  "currentStep": "GPUPDATE",
+  "deploymentStatus": "POST_DOMAIN_PENDING"
+}
+``` 
+### Prueba 4 - Consultar fases registradas
+Comando ejecutado:
+
+```bash
+curl http://localhost:8080/api/deployments/DEPLOY-PC002-20260511/steps
+``` 
+
+```json
+[
+  {
+    "stepName": "DRIVER_INSTALLATION",
+    "stepStatus": "SUCCESS"
+  },
+  {
+    "stepName": "DOMAIN_JOIN",
+    "stepStatus": "SUCCESS"
+  },
+  {
+    "stepName": "GPUPDATE",
+    "stepStatus": "SUCCESS"
+  }
+]
+```
+
+![[Pasted image 20260513210359.png]]
+
+### Prueba 5 - Registrar fase fallida
+
+Comando ejecutado:
+
+```bash
+curl -X POST http://localhost:8080/api/deployments/DEPLOY-PC003-20260511/steps \
+  -H "Content-Type: application/json" \
+  -d '{
+    "stepName": "RADIUS_8021X_CONFIGURATION",
+    "stepStatus": "FAILED",
+    "message": "802.1X configuration failed",
+    "errorCode": "RADIUS_PROFILE_ERROR",
+    "rawOutput": "Unable to apply network profile."
+  }'
+  ```
+
+Resultado esperado:
+El Deployment debe actualizarse a:
+
+```json 
+{
+  "currentStep": "RADIUS_8021X_CONFIGURATION",
+  "deploymentStatus": "FAILED"
+}
+```
 
 ## Evidencia 3 - MariaDB en Docker
 

@@ -131,8 +131,8 @@ bash docker compose build docker compose up
 - [x] MariaDB con Docker.
 - [x] Dashboard React inicial.
 - [x] Recepción de checks básicos.
-- [ ] Modelo Deployment.
-- [ ] Registro de fases DeploymentStep.
+- [x] Modelo Deployment.
+- [x] Registro de fases DeploymentStep.
 - [ ] Registro de checks post-dominio.
 - [ ] Dashboard de despliegues.
 - [ ] Documentación profesional.
