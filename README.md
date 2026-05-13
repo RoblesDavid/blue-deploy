@@ -1,12 +1,12 @@
 # 🛡️ BlueDeploy
 
-BlueDeploy es una plataforma Blue Team para monitorizar despliegues Windows corporativos realizados con OSDCloud, validando el estado de seguridad, registrando errores por fase y generando evidencias desde un dashboard web.
+Proyecto de automatización de despliegue de sistemas Windows con monitorización de seguridad tipo **Blue Team / SOC**.
 
 ---
 
 ## 🎯 Objetivo
 
-Centralizar en un panel web el estado de los despliegues Windows realizados con OSDCloud, registrando cada fase del proceso, validando controles de seguridad Blue Team y mostrando qué equipos han finalizado correctamente, cuáles han fallado, cuáles están pendientes de validación y cuáles incumplen requisitos de hardening. 
+Automatizar el despliegue de equipos Windows mediante OSDCloud y validar su estado de seguridad en tiempo real mediante checks tipo CIS, centralizando los resultados en un dashboard web.
 
 ---
 
