@@ -9,6 +9,7 @@ import com.roblesdavid.blue_deploy.model.DeploymentStep;
 import com.roblesdavid.blue_deploy.model.StepStatus;
 import com.roblesdavid.blue_deploy.repository.DeploymentStepRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ public class DeploymentStepService {
         this.deploymentService = deploymentService;
     }
 
+    @Transactional
     public DeploymentStepResponseDTO registerStep(String deploymentId, DeploymentStepRequestDTO dto) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
 
@@ -50,6 +52,7 @@ public class DeploymentStepService {
         return DeploymentStepMapper.toDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<DeploymentStepResponseDTO> getStepsByDeploymentId(String deploymentId) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
 

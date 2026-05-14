@@ -8,6 +8,7 @@ import com.roblesdavid.blue_deploy.model.Deployment;
 import com.roblesdavid.blue_deploy.model.DeploymentStatus;
 import com.roblesdavid.blue_deploy.repository.DeploymentRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,7 @@ public class DeploymentService {
         this.repository = repository;
     }
 
+    @Transactional
     public DeploymentResponseDTO createDeployment(DeploymentRequestDTO dto) {
         repository.findByDeploymentId(dto.getDeploymentId()).ifPresent(existing -> {
             throw new IllegalArgumentException("Ya existe un deployment con id: " + dto.getDeploymentId());
@@ -44,6 +46,7 @@ public class DeploymentService {
         return DeploymentMapper.toDTO(saved);
     }
 
+    @Transactional(readOnly = true)
     public List<DeploymentResponseDTO> getAllDeployments() {
         return repository.findAll()
                 .stream()
@@ -51,6 +54,7 @@ public class DeploymentService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public DeploymentResponseDTO getDeploymentByDeploymentId(String deploymentId) {
         Deployment deployment = repository.findByDeploymentId(deploymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Deployment no encontrado: " + deploymentId));
@@ -63,6 +67,7 @@ public class DeploymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Deployment no encontrado: " + deploymentId));
     }
 
+    @Transactional
     public Deployment saveDeployment(Deployment deployment) {
         return repository.save(deployment);
     }
