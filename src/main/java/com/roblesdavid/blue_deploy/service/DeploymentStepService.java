@@ -9,10 +9,14 @@ import com.roblesdavid.blue_deploy.model.DeploymentStep;
 import com.roblesdavid.blue_deploy.model.StepStatus;
 import com.roblesdavid.blue_deploy.repository.DeploymentStepRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Gestiona el registro de pasos del deployment y actualiza su estado agregado.
+ */
 @Service
 public class DeploymentStepService {
 
@@ -27,6 +31,14 @@ public class DeploymentStepService {
         this.deploymentService = deploymentService;
     }
 
+    /**
+     * Registra un paso ejecutado para el deployment indicado.
+     *
+     * @param deploymentId id funcional del deployment
+     * @param dto información del paso reportado
+     * @return paso persistido en formato DTO
+     */
+    @Transactional
     public DeploymentStepResponseDTO registerStep(String deploymentId, DeploymentStepRequestDTO dto) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
 
@@ -50,6 +62,13 @@ public class DeploymentStepService {
         return DeploymentStepMapper.toDTO(saved);
     }
 
+    /**
+     * Lista los pasos de un deployment en orden cronológico de reporte.
+     *
+     * @param deploymentId id funcional del deployment
+     * @return colección de pasos
+     */
+    @Transactional(readOnly = true)
     public List<DeploymentStepResponseDTO> getStepsByDeploymentId(String deploymentId) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
 
@@ -59,6 +78,9 @@ public class DeploymentStepService {
                 .toList();
     }
 
+    /**
+     * Traduce el estado de un paso al estado global del deployment.
+     */
     private void updateDeploymentStatusFromStep(
             Deployment deployment,
             DeploymentStepRequestDTO dto,

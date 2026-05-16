@@ -214,30 +214,101 @@ El Deployment debe actualizarse a:
 }
 ```
 
-## Evidencia 3 - MariaDB en Docker
+## Evidencia 3 - QA automática backend (tests + seguridad básica)
+
+Fecha: 2026-05-16  
+Rama: feature/security-checks
+
+### Objetivo
+
+Validar automáticamente que BlueDeploy funciona en casos correctos, errores de validación y payloads no esperados (incluyendo intentos de SQL injection en campos de entrada).
+
+### Cobertura implementada
+
+- Deployment API:
+  - alta correcta
+  - duplicados
+  - payload inválido
+  - búsqueda con id tipo inyección
+- DeploymentStep API:
+  - transición de estados (DOMAIN_JOINED, POST_DOMAIN_PENDING, COMPLETED, FAILED)
+  - payload inválido
+- SecurityCheck API:
+  - reglas de compliance (PENDING, NON_COMPLIANT, COMPLETED_WITH_WARNINGS, COMPLIANT)
+  - protección de estado `FAILED` previo
+  - enums inválidos
+  - payload tipo SQL injection
+- Check API legacy:
+  - health
+  - login válido e inválido
+  - payload inválido
+  - hostname con inyección simulada
+
+### Comando ejecutado
+
+```bash
+mvn test
+```
+
+### Resultado
+
+Suite en verde:
+
+- DeploymentApiIntegrationTest: 5 tests OK
+- DeploymentStepApiIntegrationTest: 4 tests OK
+- SecurityCheckApiIntegrationTest: 7 tests OK-
+- LegacyCheckApiIntegrationTest: 6 tests OK
+
+Total: 22 tests, 0 fallos, 0 errores.
+
+![[Pasted image 20260516131015.png]]
+
+### Evidencia adicional para prueba visual
+
+Se añadió colección Postman para demostrar gráficamente:
+
+- casos correctos
+- ![[Pasted image 20260516131218.png]]
+- errores 400/401/404
+- ![[Pasted image 20260516131119.png]]
+- entradas hostiles tratadas como texto literal
+![[Pasted image 20260516131327.png]]
+
+Archivo:
+
+`postman/BlueDeploy-QA.postman_collection.json`
+
+### Ajustes técnicos derivados del QA
+
+- Se habilitó validación real de DTOs con `spring-boot-starter-validation`.
+- Se añadió manejador global de excepciones para respuestas HTTP consistentes.
+- `login` inválido devuelve `401 Unauthorized`.
+- `Severity` corregido a `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
+
+## Evidencia 4 - MariaDB en Docker
 
 Pendiente de añadir captura.
 
-## Evidencia 4 - Dashboard React
+## Evidencia 5 - Dashboard React
 
 Pendiente de añadir captura.
 
-## Evidencia 5 - Registro de deployment
+## Evidencia 6 - Registro de deployment
 
 Pendiente de añadir captura.
 
-## Evidencia 6 - Registro de fases PowerShell
+## Evidencia 7 - Registro de fases PowerShell
 
 Pendiente de añadir captura.
 
-## Evidencia 7 - Validación post-dominio
+## Evidencia 8 - Validación post-dominio
 
 Pendiente de añadir captura.
 
-## Evidencia 8 - Despliegue en Hetzner
+## Evidencia 9 - Despliegue en Hetzner
 
 Pendiente de añadir captura.
 
-## Evidencia 9 - Roadmap Práctica 2
+## Evidencia 10 - Roadmap Práctica 2
 
 Pendiente de añadir captura.

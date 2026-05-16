@@ -3,8 +3,17 @@ package com.roblesdavid.blue_deploy.mapper;
 import com.roblesdavid.blue_deploy.dto.DeploymentStepResponseDTO;
 import com.roblesdavid.blue_deploy.model.DeploymentStep;
 
+/**
+ * Mapper de entidad {@link DeploymentStep} a DTO de respuesta.
+ */
 public class DeploymentStepMapper {
 
+    /**
+     * Convierte un paso de deployment persistido a salida API.
+     *
+     * @param step paso a mapear
+     * @return DTO de respuesta
+     */
     public static DeploymentStepResponseDTO toDTO(DeploymentStep step) {
         DeploymentStepResponseDTO dto = new DeploymentStepResponseDTO();
 

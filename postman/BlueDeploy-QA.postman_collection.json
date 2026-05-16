@@ -1,0 +1,138 @@
+{
+  "info": {
+    "name": "BlueDeploy QA",
+    "description": "Coleccion para validar flujos funcionales, errores y pruebas basicas de seguridad en BlueDeploy.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Create deployment (OK)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deploymentId\": \"DEPLOY-PC900-20260516\",\n  \"hostname\": \"PC900\",\n  \"deviceModel\": \"Dell Latitude 5440\",\n  \"domainName\": \"corp.local\"\n}"
+        }
+      }
+    },
+    {
+      "name": "02 - Create deployment duplicate (Error 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deploymentId\": \"DEPLOY-PC900-20260516\",\n  \"hostname\": \"PC900\",\n  \"deviceModel\": \"Dell Latitude 5440\",\n  \"domainName\": \"corp.local\"\n}"
+        }
+      }
+    },
+    {
+      "name": "03 - Create deployment invalid payload (Error 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deploymentId\": \"\",\n  \"hostname\": \"\",\n  \"deviceModel\": \"X\",\n  \"domainName\": \"corp.local\"\n}"
+        }
+      }
+    },
+    {
+      "name": "04 - Register step DOMAIN_JOIN SUCCESS",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516/steps",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"stepName\": \"DOMAIN_JOIN\",\n  \"stepStatus\": \"SUCCESS\",\n  \"message\": \"Domain join completed\",\n  \"rawOutput\": \"ok\"\n}"
+        }
+      }
+    },
+    {
+      "name": "05 - Register check PENDING (POST_DOMAIN_PENDING)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516/checks",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"checkName\": \"CROWDSTRIKE_VALIDATED\",\n  \"checkStatus\": \"PENDING\",\n  \"severity\": \"HIGH\",\n  \"expectedValue\": \"Installed\",\n  \"actualValue\": \"Not yet\",\n  \"message\": \"Pending policy application\"\n}"
+        }
+      }
+    },
+    {
+      "name": "06 - Register check invalid severity (Error 400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516/checks",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"checkName\": \"FIREWALL_ENABLED\",\n  \"checkStatus\": \"PASSED\",\n  \"severity\": \"VERY_HIGH\",\n  \"message\": \"Invalid enum test\"\n}"
+        }
+      }
+    },
+    {
+      "name": "07 - SQL-like payload in checkName",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516/checks",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"checkName\": \"CROWDSTRIKE_VALIDATED'; DROP TABLE security_check; --\",\n  \"checkStatus\": \"PENDING\",\n  \"severity\": \"HIGH\",\n  \"message\": \"Injection simulation\"\n}"
+        }
+      }
+    },
+    {
+      "name": "08 - Get deployment by id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516"
+      }
+    },
+    {
+      "name": "09 - Get deployment with SQL-like id (Not Found)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/deployments/DEPLOY-PC900-20260516' OR '1'='1"
+      }
+    },
+    {
+      "name": "10 - Legacy login invalid (401)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/api/checks/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"user\": \"admin\",\n  \"password\": \"wrong\"\n}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" }
+  ]
+}

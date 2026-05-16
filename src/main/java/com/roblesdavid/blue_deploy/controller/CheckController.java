@@ -2,9 +2,10 @@ package com.roblesdavid.blue_deploy.controller;
 
 import com.roblesdavid.blue_deploy.dto.CheckRequestDTO;
 import com.roblesdavid.blue_deploy.dto.CheckResponseDTO;
-import com.roblesdavid.blue_deploy.model.Check;
 import com.roblesdavid.blue_deploy.service.CheckService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -52,7 +53,7 @@ public class CheckController {
             return "TOKEN_OK";
         }
 
-        throw new RuntimeException("Unauthorized");
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized");
     }
 
     /**

@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad raíz que representa el estado global de un proceso de despliegue.
+ */
 @Entity
 @Table(name = "deployment")
 public class Deployment {

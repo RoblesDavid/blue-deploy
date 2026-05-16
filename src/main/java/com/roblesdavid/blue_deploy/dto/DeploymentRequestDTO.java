@@ -2,6 +2,9 @@ package com.roblesdavid.blue_deploy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * DTO de entrada para registrar un nuevo deployment.
+ */
 public class DeploymentRequestDTO {
 
     @NotBlank(message = "deploymentId no puede estar vacío")
