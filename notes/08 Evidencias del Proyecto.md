@@ -285,30 +285,84 @@ Archivo:
 - `login` inválido devuelve `401 Unauthorized`.
 - `Severity` corregido a `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`.
 
-## Evidencia 4 - MariaDB en Docker
+## Evidencia 4 - Sprint 4: Dashboard Summary API
+
+Fecha: 2026-05-16  
+Rama: feature/dashboard-summary
+
+### Objetivo
+
+Exponer un endpoint único para resumen de estado global del entorno, consumible por el dashboard frontend.
+
+### Endpoint probado
+
+- GET /api/dashboard/summary
+
+### Respuesta esperada del endpoint
+
+```json
+{
+  "totalDeployments": 9,
+  "inProgress": 1,
+  "domainJoined": 1,
+  "postDomainPending": 3,
+  "completed": 1,
+  "completedWithWarnings": 1,
+  "failed": 1,
+  "nonCompliant": 1,
+  "pendingCrowdStrike": 1,
+  "pendingMicroClaudia": 1
+}
+```
+
+### Validación automática
+
+Comando ejecutado:
+
+```bash
+mvn test
+```
+
+Resultado de los tests de sprint:
+
+- DashboardApiIntegrationTest: 2 tests OK
+  - resumen vacío devuelve todo a 0
+  - resumen con datos mixtos devuelve conteos exactos
+
+### Validación visual
+
+Colección Postman actualizada:
+
+`postman/BlueDeploy-QA.postman_collection.json`
+
+Request añadido:
+
+- `11 - Dashboard summary`
+
+## Evidencia 5 - MariaDB en Docker
 
 Pendiente de añadir captura.
 
-## Evidencia 5 - Dashboard React
+## Evidencia 6 - Dashboard React
 
 Pendiente de añadir captura.
 
-## Evidencia 6 - Registro de deployment
+## Evidencia 7 - Registro de deployment
 
 Pendiente de añadir captura.
 
-## Evidencia 7 - Registro de fases PowerShell
+## Evidencia 8 - Registro de fases PowerShell
 
 Pendiente de añadir captura.
 
-## Evidencia 8 - Validación post-dominio
+## Evidencia 9 - Validación post-dominio
 
 Pendiente de añadir captura.
 
-## Evidencia 9 - Despliegue en Hetzner
+## Evidencia 10 - Despliegue en Hetzner
 
 Pendiente de añadir captura.
 
-## Evidencia 10 - Roadmap Práctica 2
+## Evidencia 11 - Roadmap Práctica 2
 
 Pendiente de añadir captura.

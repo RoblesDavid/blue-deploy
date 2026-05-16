@@ -1,4 +1,3 @@
-
 ## Sprint 0 - Reorganización del proyecto
 
 Objetivo:
@@ -57,16 +56,12 @@ Endpoints implementados:
 - POST /api/deployments/{deploymentId}/steps
 - GET /api/deployments/{deploymentId}/steps
 
-Endpoint:
+Estados automáticos:
 
-- POST /api/deployments/{deploymentId}/steps
-- GET /api/deployments/{deploymentId}/steps
-- Estados automáticos iniciales:
-
-- DOMAIN_JOIN + SUCCESS → DOMAIN_JOINED
-- GPUPDATE + SUCCESS → POST_DOMAIN_PENDING
-- FINAL_SECURITY_VALIDATION + SUCCESS → COMPLETED
-- Cualquier fase + FAILED → FAILED
+- DOMAIN_JOIN + SUCCESS -> DOMAIN_JOINED
+- GPUPDATE + SUCCESS -> POST_DOMAIN_PENDING
+- FINAL_SECURITY_VALIDATION + SUCCESS -> COMPLETED
+- Cualquier fase + FAILED -> FAILED
 
 Resultado:
 
@@ -80,18 +75,22 @@ Objetivo:
 
 Registrar validaciones post-dominio.
 
-Tareas:
+Estado: COMPLETADO
 
-- Crear SecurityCheck
-- Crear CheckStatus
-- Crear Severity
-- Crear SecurityCheckRepository
-- Crear SecurityCheckService
-- Crear SecurityCheckController
+Tareas completadas:
 
-Endpoint:
+- SecurityCheck y enums de estado/severidad.
+- SecurityCheckRepository.
+- SecurityCheckService.
+- SecurityCheckController.
+- Evaluación automática de compliance.
+- Manejo consistente de errores API.
+- Tests de integración para casos OK y casos de error.
+
+Endpoints implementados:
 
 - POST /api/deployments/{deploymentId}/checks
+- GET /api/deployments/{deploymentId}/checks
 
 Checks iniciales:
 
@@ -103,21 +102,39 @@ Checks iniciales:
 
 ---
 
-## Sprint 4 - Dashboard
+## Sprint 4 - Dashboard Summary API
 
 Objetivo:
 
-Mostrar información relevante en el frontend.
+Exponer métricas agregadas para alimentar el dashboard web.
 
-Métricas:
+Estado: COMPLETADO
 
-- Total de despliegues
-- Despliegues completados
-- Despliegues fallidos
-- Pendientes post-dominio
-- Pendientes CrowdStrike
-- Pendientes MicroClaudia
-- Últimos equipos desplegados
+Endpoint implementado:
+
+- GET /api/dashboard/summary
+
+Métricas implementadas:
+
+- totalDeployments
+- inProgress
+- domainJoined
+- postDomainPending
+- completed
+- completedWithWarnings
+- failed
+- nonCompliant
+- pendingCrowdStrike
+- pendingMicroClaudia
+
+Resultado:
+
+BlueDeploy ya expone un resumen agregado y consistente de estado operativo y validación de seguridad para su visualización en frontend.
+
+Validación del sprint:
+
+- Tests de integración del endpoint de summary añadidos y en verde.
+- Colección Postman actualizada con request de dashboard summary.
 
 ---
 
