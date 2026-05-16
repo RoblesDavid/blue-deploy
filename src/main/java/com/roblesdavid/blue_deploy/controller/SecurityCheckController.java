@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Controlador REST para checks de seguridad asociados a un deployment.
+ */
 @RestController
 @RequestMapping("/api/deployments/{deploymentId}/checks")
 public class SecurityCheckController {
@@ -18,6 +21,13 @@ public class SecurityCheckController {
         this.service = service;
     }
 
+    /**
+     * Registra el resultado de una comprobación de seguridad.
+     *
+     * @param deploymentId identificador del deployment
+     * @param dto payload de la comprobación
+     * @return check persistido en formato de respuesta
+     */
     @PostMapping
     public SecurityCheckResponseDTO registerCheck(
             @PathVariable String deploymentId,
@@ -26,6 +36,12 @@ public class SecurityCheckController {
         return service.registerCheck(deploymentId, dto);
     }
 
+    /**
+     * Recupera los checks de seguridad de un deployment.
+     *
+     * @param deploymentId identificador del deployment
+     * @return checks ordenados por fecha de reporte
+     */
     @GetMapping
     public List<SecurityCheckResponseDTO> getChecksByDeploymentId(@PathVariable String deploymentId) {
         return service.getChecksByDeploymentId(deploymentId);

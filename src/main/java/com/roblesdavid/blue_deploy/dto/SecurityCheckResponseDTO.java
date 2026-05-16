@@ -1,5 +1,8 @@
 package com.roblesdavid.blue_deploy.dto;
 
+/**
+ * DTO de salida para devolver checks de seguridad reportados.
+ */
 public class SecurityCheckResponseDTO {
     public Long id;
     public String deploymentId;

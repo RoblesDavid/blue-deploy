@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa una comprobación de seguridad asociada a un deployment.
+ */
 @Entity
 @Table(name = "security_check")
 public class SecurityCheck {

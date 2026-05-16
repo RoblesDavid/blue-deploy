@@ -13,6 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Orquesta el ciclo de vida de los deployments y su persistencia.
+ */
 @Service
 public class DeploymentService {
 
@@ -22,6 +25,12 @@ public class DeploymentService {
         this.repository = repository;
     }
 
+    /**
+     * Crea un deployment nuevo con estado inicial.
+     *
+     * @param dto datos de creación del deployment
+     * @return deployment persistido en formato DTO
+     */
     @Transactional
     public DeploymentResponseDTO createDeployment(DeploymentRequestDTO dto) {
         repository.findByDeploymentId(dto.getDeploymentId()).ifPresent(existing -> {
@@ -46,6 +55,11 @@ public class DeploymentService {
         return DeploymentMapper.toDTO(saved);
     }
 
+    /**
+     * Obtiene todos los deployments y los adapta a DTO de salida.
+     *
+     * @return lista de deployments
+     */
     @Transactional(readOnly = true)
     public List<DeploymentResponseDTO> getAllDeployments() {
         return repository.findAll()
@@ -54,6 +68,12 @@ public class DeploymentService {
                 .toList();
     }
 
+    /**
+     * Busca un deployment por su id funcional.
+     *
+     * @param deploymentId identificador funcional del deployment
+     * @return deployment encontrado en formato DTO
+     */
     @Transactional(readOnly = true)
     public DeploymentResponseDTO getDeploymentByDeploymentId(String deploymentId) {
         Deployment deployment = repository.findByDeploymentId(deploymentId)
@@ -62,11 +82,23 @@ public class DeploymentService {
         return DeploymentMapper.toDTO(deployment);
     }
 
+    /**
+     * Devuelve la entidad Deployment para reutilizarla desde otros servicios.
+     *
+     * @param deploymentId identificador funcional del deployment
+     * @return entidad deployment gestionada por JPA
+     */
     public Deployment getDeploymentEntityByDeploymentId(String deploymentId) {
         return repository.findByDeploymentId(deploymentId)
                 .orElseThrow(() -> new IllegalArgumentException("Deployment no encontrado: " + deploymentId));
     }
 
+    /**
+     * Persiste cambios de estado sobre un deployment existente.
+     *
+     * @param deployment entidad a guardar
+     * @return entidad guardada
+     */
     @Transactional
     public Deployment saveDeployment(Deployment deployment) {
         return repository.save(deployment);

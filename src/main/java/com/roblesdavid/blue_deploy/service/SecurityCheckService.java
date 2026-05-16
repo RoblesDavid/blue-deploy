@@ -15,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Gestiona los checks de seguridad y la actualización del estado de cumplimiento.
+ */
 @Service
 public class SecurityCheckService {
 
@@ -29,6 +32,13 @@ public class SecurityCheckService {
         this.deploymentService = deploymentService;
     }
 
+    /**
+     * Registra un check de seguridad para un deployment y recalcula compliance.
+     *
+     * @param deploymentId id funcional del deployment
+     * @param dto resultado del check reportado
+     * @return check persistido en formato DTO
+     */
     @Transactional
     public SecurityCheckResponseDTO registerCheck(String deploymentId, SecurityCheckRequestDTO dto) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
@@ -53,6 +63,12 @@ public class SecurityCheckService {
         return SecurityCheckMapper.toDTO(saved);
     }
 
+    /**
+     * Lista todos los checks asociados a un deployment.
+     *
+     * @param deploymentId id funcional del deployment
+     * @return checks ordenados por fecha de reporte
+     */
     @Transactional(readOnly = true)
     public List<SecurityCheckResponseDTO> getChecksByDeploymentId(String deploymentId) {
         Deployment deployment = deploymentService.getDeploymentEntityByDeploymentId(deploymentId);
@@ -64,6 +80,9 @@ public class SecurityCheckService {
                 .toList();
     }
 
+    /**
+     * Calcula el estado de cumplimiento final a partir de los checks acumulados.
+     */
     private void updateDeploymentCompliance(Deployment deployment, LocalDateTime now) {
         List<SecurityCheck> checks = repository.findByDeploymentOrderByReportedAtAsc(deployment);
 

@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que representa una alerta de seguridad generada automáticamente.
+ */
 @Entity
 public class Alert {
     @Id

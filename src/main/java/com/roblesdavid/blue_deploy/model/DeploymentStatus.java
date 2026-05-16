@@ -1,5 +1,8 @@
 package com.roblesdavid.blue_deploy.model;
 
+/**
+ * Estados de evolución del proceso de deployment.
+ */
 public enum DeploymentStatus {
     IN_PROGRESS,
     DOMAIN_JOINED,

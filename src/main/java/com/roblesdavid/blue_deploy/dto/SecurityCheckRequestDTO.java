@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO de entrada para reportar una comprobación de seguridad.
+ */
 public class SecurityCheckRequestDTO {
 
     @NotBlank(message = "checkName no puede estar vacío")

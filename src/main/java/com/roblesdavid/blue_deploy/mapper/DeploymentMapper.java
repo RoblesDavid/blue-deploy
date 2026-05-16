@@ -3,8 +3,17 @@ package com.roblesdavid.blue_deploy.mapper;
 import com.roblesdavid.blue_deploy.dto.DeploymentResponseDTO;
 import com.roblesdavid.blue_deploy.model.Deployment;
 
+/**
+ * Mapper de entidad {@link Deployment} a su DTO de salida.
+ */
 public class DeploymentMapper {
 
+    /**
+     * Adapta la entidad de dominio a formato API.
+     *
+     * @param deployment entidad a mapear
+     * @return DTO de respuesta
+     */
     public static DeploymentResponseDTO toDTO(Deployment deployment) {
         DeploymentResponseDTO dto = new DeploymentResponseDTO();
 
