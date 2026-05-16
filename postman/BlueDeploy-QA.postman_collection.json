@@ -130,6 +130,13 @@
           "raw": "{\n  \"user\": \"admin\",\n  \"password\": \"wrong\"\n}"
         }
       }
+    },
+    {
+      "name": "11 - Dashboard summary",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/dashboard/summary"
+      }
     }
   ],
   "variable": [
