@@ -23,3 +23,8 @@ mvnw
 Thumbs.db
 notes/18. Plan GitHub desde este momento.md
 notes/.obsidian/workspace.json
+
+#Scripts locales OSDCloud
+scripts/powershell/osdcloud/
+notes/Guias/
+notes/.obsidian/workspace.json
