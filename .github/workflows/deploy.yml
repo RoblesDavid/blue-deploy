@@ -44,10 +44,10 @@ jobs:
             git pull origin main
 
             echo "→ Reconstruyendo imágenes..."
-            docker compose -f docker-compose.prod.yml build --no-cache
+            docker compose -f docker-compose.prod.yml --env-file .env.production build --no-cache
 
             echo "→ Reiniciando servicios..."
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 
             echo "→ Limpiando imágenes antiguas..."
             docker image prune -f
