@@ -140,7 +140,7 @@ bash docker compose build docker compose up
 - [x] Autenticación mock con JWT preparado para Práctica 2.
 - [x] Tests de integración (25+ tests, todos en verde).
 - [x] Documentación técnica en Obsidian (12 notas).
-- [ ] Despliegue en Hetzner (pendiente).
+- [x] Despliegue en Hetzner.
 
 ### Práctica 2
 
