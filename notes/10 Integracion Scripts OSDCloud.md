@@ -23,26 +23,30 @@ Orden:
 5. `JoinDomain.ps1`
 6. `AddComputerToADGroup_WSUS.ps1`
 7. `InstallSoftware.ps1`
-8. Scripts de seguridad post-dominio
+8. `Scripts de seguridad post-dominio`
 
-## Script actual
+## Revisión de seguridad de scripts
 
-### `01 - Start-OSDCloud.ps1`
+Estado: COMPLETADO
 
-Estado: EN PROGRESO
+### Objetivo
 
-JSON esperados:
+Revisar la carpeta `scripts/` antes de cerrar el Sprint 5 para evitar incluir credenciales reales o usuarios no permitidos en el repositorio.
 
-```json
-- `000_deployment.json`
-- `010_hostname_captured_step.json`
-- `020_windows_installation_step.json`
-- `025_unattend_generated_step.json`
-- `027_setupcomplete_registered_step.json`
-```
+### Comprobaciones realizadas
 
-Commit posterior:
-``` bash
-git add notes/10-integracion-scripts-osdcloud.md
-git commit -m "docs: add OSDCloud script integration notes"
-```
+- Búsqueda de usuario literal `Administrador`.
+- Búsqueda de contraseñas o secretos en texto plano.
+- Búsqueda de cadenas Base64 no autorizadas.
+- Revisión de scripts PowerShell y CMD dentro de `scripts/`.
+
+### Resultado
+
+No se encontró ningún usuario literal llamado `Administrador`.
+
+No Se detectaron cadenas Base64 distintas a la autorizada en scripts OSDCloud. 
+
+### Estado final esperado
+
+Los scripts incluidos en el proyecto no contienen credenciales reales ni referencias al usuario de test `OSDAdmin`.
+
