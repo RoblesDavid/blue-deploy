@@ -343,9 +343,71 @@ Request añadido:
 
 Pendiente de añadir captura.
 
-## Evidencia 6 - Dashboard React
+## Evidencia 6 - Dashboard React (Sprint 6 - Práctica 1)
 
-Pendiente de añadir captura.
+Fecha: 2026-05-31
+Rama: feature/dashboard-summary
+
+### Objetivo
+
+Rediseñar el dashboard con Tailwind CSS v4, sistema de roles mock y vistas diferenciadas para Administrador y Técnico.
+
+### Stack añadido
+
+- Tailwind CSS v4 + @tailwindcss/vite
+- lucide-react (iconografía)
+
+### Estructura de archivos creados
+
+```
+frontend/src/
+├── auth/               AuthContext.jsx, ProtectedRoute.jsx
+├── components/
+│   ├── layout/         Sidebar.jsx, Header.jsx, Layout.jsx
+│   ├── common/         Badge.jsx, StatCard.jsx
+│   ├── deployments/    DeploymentTable.jsx, DeploymentDetail.jsx
+│   └── modals/         CreateTechnicianModal.jsx
+├── data/               mockUsers.js, mockDeployments.js
+└── pages/
+    ├── admin/          AdminDashboard.jsx, AllDeployments.jsx, TechnicianManagement.jsx
+    └── technician/     TechnicianDashboard.jsx, MyDeployments.jsx, MyProfile.jsx
+```
+
+### Usuarios demo
+
+| Rol | Usuario | Contraseña |
+|-----|---------|------------|
+| Administrador | admin | admin |
+| Técnico | carlos | tecnico1 |
+| Técnico | ana | tecnico2 |
+
+### Datos mock
+
+7 despliegues distribuidos entre 2 técnicos:
+- Carlos Rodríguez: 4 despliegues (COMPLETED, IN_PROGRESS, FAILED, COMPLETED_WITH_WARNINGS)
+- Ana García: 3 despliegues (COMPLETED, POST_DOMAIN_PENDING, NON_COMPLIANT)
+
+### Funcionalidades por rol
+
+**Administrador:**
+- Dashboard global con métricas de todos los técnicos
+- Gráfico de barras apiladas por técnico y estado
+- Listado filtrable de todos los despliegues
+- Vista de gestión de técnicos con tarjetas de resumen
+- Modal de alta de técnico (UI demo, sin persistencia)
+
+**Técnico:**
+- Dashboard personal con sus estadísticas
+- Listado filtrable de sus propios despliegues
+- Perfil con formulario de edición (UI demo)
+
+### Panel de detalle (DeploymentDetail)
+
+Slide-over lateral con:
+- Metadatos del deployment
+- Línea de tiempo de fases con icono de estado
+- Verificaciones de seguridad con severity y valores expected/actual
+- Marcas de tiempo de inicio, fin y última actividad
 
 ## Evidencia 7 - Registro de deployment
 

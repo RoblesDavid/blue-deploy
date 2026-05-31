@@ -8,14 +8,15 @@ target/
 # IntelliJ
 .idea/
 *.iml
+.claude/
 out/
 
 # Docker & Config
 .env
 .TokenAccess
 *.log
-nginx/
 logs/
+# nginx/ eliminado: default.conf no contiene secretos y debe estar en el repo
 
 # Sistema
 .DS_Store
@@ -25,6 +26,5 @@ Thumbs.db
 
 #Scripts locales OSDCloud
 notes/Guias/
-notes/18. Plan GitHub desde este momento.md
 notes/.obsidian/workspace.json
 

@@ -150,3 +150,48 @@ Funciones PowerShell:
 - Send-BlueDeployStep
 - Send-BlueDeployCheck
 - Complete-BlueDeployDeployment
+
+---
+
+## Sprint 6 - Dashboard Frontend con Roles (Práctica 1 - Cierre)
+
+Estado: COMPLETADO
+
+Objetivo:
+
+Rediseñar el frontend con Tailwind CSS, sistema de autenticación mock y vistas diferenciadas por rol (Administrador / Técnico).
+
+### Tareas completadas:
+
+- Instalación y configuración de Tailwind CSS v4 + lucide-react.
+- Capa de datos mock (JSON estáticos): 2 usuarios técnicos + 7 despliegues realistas.
+- AuthContext con persistencia en localStorage.
+- Rutas protegidas por rol (ProtectedRoute).
+- Layout compartido: Sidebar + Header responsivos con navegación por rol.
+- Componentes reutilizables: Badge, StatCard, DeploymentTable, DeploymentDetail (panel lateral), CreateTechnicianModal.
+- Vista Administrador:
+  - Dashboard con métricas globales (6 StatCards) + gráfico de barras por técnico.
+  - Listado completo de despliegues con filtros por estado y técnico.
+  - Gestión de técnicos con modal de alta (modo demo).
+- Vista Técnico:
+  - Dashboard personal con resumen de propios despliegues.
+  - Listado filtrable de sus despliegues.
+  - Página de perfil con formulario de edición (modo demo).
+- Login rediseñado con acceso rápido a los 3 usuarios demo.
+- Test de integración Java (MockDataPopulationTest): 4 despliegues realistas, 2 técnicos, validación del summary API.
+- Notas Obsidian actualizadas + nueva nota de historial de commits.
+
+### Credenciales demo (Práctica 1):
+
+| Usuario | Contraseña | Rol |
+|---------|------------|-----|
+| admin | admin | Administrador |
+| carlos | tecnico1 | Técnico |
+| ana | tecnico2 | Técnico |
+
+### Notas de Práctica 2:
+
+- Reemplazar credenciales mock por JWT + Spring Security.
+- Persistir usuarios en base de datos.
+- Implementar lógica real de creación de técnicos.
+- Añadir autenticación API Key para scripts PowerShell.

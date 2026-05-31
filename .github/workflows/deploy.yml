@@ -1,0 +1,58 @@
+name: Deploy — Hetzner
+
+# Solo se dispara al hacer merge/push a main
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Desplegar en Hetzner vía SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Ejecutamos los tests antes de desplegar
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - name: Tests backend (falla el deploy si hay errores)
+        run: mvn test --no-transfer-progress
+
+      # Desplegamos en el VPS vía SSH
+      - name: Deploy en Hetzner
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          port: ${{ secrets.HETZNER_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/bluedeploy
+
+            echo "→ Actualizando código..."
+            git pull origin main
+
+            echo "→ Reconstruyendo imágenes..."
+            docker compose -f docker-compose.prod.yml build --no-cache
+
+            echo "→ Reiniciando servicios..."
+            docker compose -f docker-compose.prod.yml up -d
+
+            echo "→ Limpiando imágenes antiguas..."
+            docker image prune -f
+
+            echo "✓ Despliegue completado"
+
+# ── Secrets requeridos en GitHub → Settings → Secrets ────────────────────────
+# HETZNER_HOST : IP pública o dominio del servidor
+# HETZNER_USER : usuario SSH (generalmente "root" o "deploy")
+# HETZNER_SSH_KEY : clave privada SSH (genera con: ssh-keygen -t ed25519)
+# HETZNER_PORT : puerto SSH (opcional, por defecto 22)
