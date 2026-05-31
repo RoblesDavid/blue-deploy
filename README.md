@@ -41,10 +41,12 @@ text OSDCloud / PowerShell ? Eventos JSON por fase ? API REST Spring Boot ? Mari
 
 ### Frontend
 
-- Dashboard React + Vite.
-- Visualización de estados.
-- Métricas iniciales.
-- Auto-refresh de datos.
+- Dashboard React + Vite + Tailwind CSS v4.
+- Sistema de autenticación mock con dos roles: Administrador y Técnico.
+- Vista de administrador: métricas globales, gráfico por técnico, gestión de técnicos.
+- Vista de técnico: dashboard personal, despliegues propios, perfil editable.
+- Panel de detalle de despliegues con fases y verificaciones de seguridad.
+- Datos mock estáticos (7 despliegues, 2 técnicos) para demo sin backend.
 
 ### Próxima evolución
 
@@ -129,14 +131,16 @@ bash docker compose build docker compose up
 
 - [x] Backend Spring Boot inicial.
 - [x] MariaDB con Docker.
-- [x] Dashboard React inicial.
-- [x] Recepción de checks básicos.
 - [x] Modelo Deployment.
 - [x] Registro de fases DeploymentStep.
-- [ ] Registro de checks post-dominio.
-- [ ] Dashboard de despliegues.
-- [ ] Documentación profesional.
-- [ ] Despliegue en Hetzner.
+- [x] Registro de checks post-dominio (SecurityCheck).
+- [x] Dashboard Summary API (GET /api/dashboard/summary).
+- [x] Integración PowerShell (cola JSON local).
+- [x] Dashboard React con roles (Administrador / Técnico).
+- [x] Autenticación mock con JWT preparado para Práctica 2.
+- [x] Tests de integración (25+ tests, todos en verde).
+- [x] Documentación técnica en Obsidian (12 notas).
+- [ ] Despliegue en Hetzner (pendiente).
 
 ### Práctica 2
 
@@ -163,5 +167,5 @@ Estas notas están pensadas para ser consultadas desde Obsidian y servir como ba
 
 ---
 
-Proyecto desarrollado como parte de formación en Ciberseguridad e Inteligencia Artificial.
+Proyecto desarrollado como parte del Máster Online en Ciberseguridad & Inteligencia Artificial por Evolve Academy.
 
