@@ -15,8 +15,8 @@ out/
 .env
 .TokenAccess
 *.log
-nginx/
 logs/
+# nginx/ eliminado: default.conf no contiene secretos y debe estar en el repo
 
 # Sistema
 .DS_Store
