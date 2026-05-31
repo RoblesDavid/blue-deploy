@@ -19,7 +19,8 @@ export function AuthProvider({ children }) {
     )
     if (!found) return { success: false, error: 'Usuario o contraseña incorrectos' }
 
-    const { password: _pw, ...safeUser } = found
+    const safeUser = { ...found }
+    delete safeUser.password
     setUser(safeUser)
     localStorage.setItem('bluedeploy_user', JSON.stringify(safeUser))
     return { success: true, user: safeUser }
@@ -37,6 +38,7 @@ export function AuthProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext)
 }

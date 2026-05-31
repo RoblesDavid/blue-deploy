@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Search, Filter } from 'lucide-react'
 import DeploymentTable from '../../components/deployments/DeploymentTable'
 import { MOCK_DEPLOYMENTS } from '../../data/mockDeployments'
@@ -22,18 +22,16 @@ export default function AllDeployments() {
 
   const technicians = MOCK_USERS.filter((u) => u.role === 'TECHNICIAN')
 
-  const filtered = useMemo(() => {
-    return MOCK_DEPLOYMENTS.filter((d) => {
-      const matchSearch =
-        !search ||
-        d.hostname.toLowerCase().includes(search.toLowerCase()) ||
-        d.deploymentId.toLowerCase().includes(search.toLowerCase()) ||
-        d.deviceModel.toLowerCase().includes(search.toLowerCase())
-      const matchStatus = !statusFilter || d.deploymentStatus === statusFilter
-      const matchTech = !techFilter || d.technicianId === techFilter
-      return matchSearch && matchStatus && matchTech
-    }).sort((a, b) => new Date(b.lastSeenAt) - new Date(a.lastSeenAt))
-  }, [search, statusFilter, techFilter])
+  const filtered = MOCK_DEPLOYMENTS.filter((d) => {
+    const matchSearch =
+      !search ||
+      d.hostname.toLowerCase().includes(search.toLowerCase()) ||
+      d.deploymentId.toLowerCase().includes(search.toLowerCase()) ||
+      d.deviceModel.toLowerCase().includes(search.toLowerCase())
+    const matchStatus = !statusFilter || d.deploymentStatus === statusFilter
+    const matchTech = !techFilter || d.technicianId === techFilter
+    return matchSearch && matchStatus && matchTech
+  }).sort((a, b) => new Date(b.lastSeenAt) - new Date(a.lastSeenAt))
 
   return (
     <div className="space-y-5">

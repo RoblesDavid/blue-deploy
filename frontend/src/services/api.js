@@ -4,7 +4,7 @@
 const API_URL = "http://localhost:8080/api/checks";
 
 export async function sendCheck(data) {
-  const res = await fetch(API_URL, {
+  await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
