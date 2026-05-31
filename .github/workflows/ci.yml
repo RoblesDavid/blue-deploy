@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+# Forzar Node.js 24 en todas las actions para evitar el deprecation de Node 20
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   backend-tests:
     name: Backend (Java 21 + Maven)
@@ -26,23 +30,23 @@ jobs:
         run: mvn test --no-transfer-progress
 
   frontend-build:
-    name: Frontend (Node 20 + Vite)
+    name: Frontend (Node 22 + Vite)
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 20
+      - name: Setup Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Instalar dependencias
         working-directory: frontend
-        run: npm ci
+        run: npm install
 
       - name: Verificar build de producción
         working-directory: frontend

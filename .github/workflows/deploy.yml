@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     name: Desplegar en Hetzner vía SSH
@@ -52,7 +55,7 @@ jobs:
             echo "✓ Despliegue completado"
 
 # ── Secrets requeridos en GitHub → Settings → Secrets ────────────────────────
-# HETZNER_HOST : IP pública o dominio del servidor
-# HETZNER_USER : usuario SSH (generalmente "root" o "deploy")
+# HETZNER_HOST    : IP pública o dominio del servidor
+# HETZNER_USER    : usuario SSH (generalmente "root" o "deploy")
 # HETZNER_SSH_KEY : clave privada SSH (genera con: ssh-keygen -t ed25519)
-# HETZNER_PORT : puerto SSH (opcional, por defecto 22)
+# HETZNER_PORT    : puerto SSH (opcional, por defecto 22)
