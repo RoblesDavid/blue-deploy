@@ -2,6 +2,10 @@ package com.roblesdavid.blue_deploy.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+/**
+ * Entidad que almacena el resultado bruto de checks básicos del endpoint legacy.
+ */
 @Entity
 @Table(name="system_check")
 

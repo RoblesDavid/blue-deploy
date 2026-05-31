@@ -1,5 +1,8 @@
 package com.roblesdavid.blue_deploy.dto;
 
+/**
+ * DTO de salida con la información agregada de un deployment.
+ */
 public class DeploymentResponseDTO {
 
     public Long id;

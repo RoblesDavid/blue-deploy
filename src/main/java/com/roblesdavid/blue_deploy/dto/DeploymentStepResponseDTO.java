@@ -1,5 +1,8 @@
 package com.roblesdavid.blue_deploy.dto;
 
+/**
+ * DTO de salida para exponer una fase reportada de deployment.
+ */
 public class DeploymentStepResponseDTO {
 
     public Long id;

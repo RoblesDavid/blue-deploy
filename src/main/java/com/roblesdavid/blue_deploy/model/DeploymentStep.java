@@ -3,6 +3,9 @@ package com.roblesdavid.blue_deploy.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad que registra cada fase reportada durante un deployment.
+ */
 @Entity
 @Table(name = "deployment_step")
 public class DeploymentStep {

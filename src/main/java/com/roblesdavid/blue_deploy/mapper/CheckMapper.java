@@ -8,10 +8,20 @@ import com.roblesdavid.blue_deploy.model.Check;
 
 import java.util.Map;
 
+/**
+ * Mapper utilitario para convertir entre {@link CheckRequestDTO}, {@link Check}
+ * y {@link CheckResponseDTO}.
+ */
 public class CheckMapper {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Convierte un payload de entrada a entidad persistible.
+     *
+     * @param dto DTO recibido desde API
+     * @return entidad {@link Check}
+     */
     public static Check toEntity(CheckRequestDTO dto) {
 
         Check check = new Check();
@@ -41,6 +51,12 @@ public class CheckMapper {
         return check;
     }
 
+    /**
+     * Convierte una entidad {@link Check} a DTO de salida.
+     *
+     * @param check entidad persistida
+     * @return DTO listo para serialización
+     */
     public static CheckResponseDTO toDTO(Check check) {
 
         CheckResponseDTO dto = new CheckResponseDTO();
@@ -58,6 +74,9 @@ public class CheckMapper {
         return dto;
     }
 
+    /**
+     * Intenta normalizar valores heterogéneos a Boolean.
+     */
     private static Boolean parseBool(Object value) {
         if (value instanceof Boolean) return (Boolean) value;
         if (value instanceof String) return Boolean.parseBoolean((String) value);

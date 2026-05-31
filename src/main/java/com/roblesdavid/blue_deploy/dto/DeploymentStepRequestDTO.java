@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
+/**
+ * DTO de entrada para reportar el resultado de una fase del deployment.
+ */
 public class DeploymentStepRequestDTO {
 
     @NotBlank(message = "stepName no puede estar vacío")
