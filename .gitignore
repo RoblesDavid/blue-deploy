@@ -21,10 +21,10 @@ logs/
 .DS_Store
 mvnw
 Thumbs.db
+
+
+#Scripts locales OSDCloud
+notes/Guias/
 notes/18. Plan GitHub desde este momento.md
 notes/.obsidian/workspace.json
 
-#Scripts locales OSDCloud
-scripts/powershell/osdcloud/
-notes/Guias/
-notes/.obsidian/workspace.json
