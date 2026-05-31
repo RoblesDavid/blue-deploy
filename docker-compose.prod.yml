@@ -1,0 +1,80 @@
+version: '3.8'
+
+# ── Diferencias clave respecto a docker-compose.yml (desarrollo) ──────────────
+#   · MariaDB no expone el puerto 3306 al exterior (solo red interna)
+#   · Spring Boot no expone el puerto 8080 al exterior (solo red interna)
+#   · Nginx es el único punto de entrada: puerto 80 → SPA + proxy /api/*
+#   · Healthchecks en db y app para orquestar el arranque correctamente
+#   · Red interna explícita "blue-net" para aislar los contenedores
+
+networks:
+  blue-net:
+    driver: bridge
+
+volumes:
+  db_data:
+
+services:
+
+  # ── Base de datos ────────────────────────────────────────────────────────────
+  db:
+    image: mariadb:11
+    container_name: blue-db
+    restart: unless-stopped
+    networks:
+      - blue-net
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Puerto 3306 NO expuesto al host (seguridad)
+
+  # ── Backend Spring Boot ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blue-app
+    restart: unless-stopped
+    networks:
+      - blue-net
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: prod
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/checks/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    # Puerto 8080 NO expuesto al host (acceso solo vía nginx)
+
+  # ── Frontend + Nginx ─────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: blue-frontend
+    restart: unless-stopped
+    networks:
+      - blue-net
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      # Para HTTPS añadir: "443:443" y montar certificados (Práctica 2)
