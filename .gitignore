@@ -13,6 +13,8 @@ out/
 
 # Docker & Config
 .env
+.env.*
+!.env.production.example
 .TokenAccess
 *.log
 logs/

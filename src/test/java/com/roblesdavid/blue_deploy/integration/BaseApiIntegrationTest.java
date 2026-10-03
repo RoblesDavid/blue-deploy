@@ -2,6 +2,7 @@ package com.roblesdavid.blue_deploy.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.roblesdavid.blue_deploy.repository.AlertRepository;
+import com.roblesdavid.blue_deploy.repository.AppUserRepository;
 import com.roblesdavid.blue_deploy.repository.CheckRepository;
 import com.roblesdavid.blue_deploy.repository.DeploymentRepository;
 import com.roblesdavid.blue_deploy.repository.DeploymentStepRepository;
@@ -43,6 +44,9 @@ abstract class BaseApiIntegrationTest {
     @Autowired
     private DeploymentRepository deploymentRepository;
 
+    @Autowired
+    protected AppUserRepository appUserRepository;
+
     @BeforeEach
     void cleanupDatabase() {
         alertRepository.deleteAll();
@@ -50,6 +54,7 @@ abstract class BaseApiIntegrationTest {
         securityCheckRepository.deleteAll();
         deploymentStepRepository.deleteAll();
         deploymentRepository.deleteAll();
+        appUserRepository.deleteAll();
     }
 
     protected ResultActions createDeployment(String deploymentId) throws Exception {

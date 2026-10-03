@@ -127,17 +127,57 @@ Ficheros: `notes/13 Despliegue en Hetzner.md`, `.gitignore`, `README.md`
 
 ---
 
+### Sprint 8 — Persistencia de Usuarios y Gestión de Técnicos (Práctica 2)
+
+**Commit 1 — Modelo y Repositorio:**
+```
+feat(backend): add AppUser entity, UserRole enum and AppUserRepository
+```
+Ficheros: `src/main/.../model/UserRole.java`, `src/main/.../model/AppUser.java`, `src/main/.../repository/AppUserRepository.java`
+
+**Commit 2 — DTOs y Mappers:**
+```
+feat(backend): add User DTOs and UserMapper for request/response handling
+```
+Ficheros: `src/main/.../dto/UserResponseDTO.java`, `src/main/.../dto/CreateTechnicianRequestDTO.java`, `src/main/.../dto/UpdateProfileRequestDTO.java`, `src/main/.../mapper/UserMapper.java`
+
+**Commit 3 — Servicio de Usuarios:**
+```
+feat(backend): implement UserService with technician management and profile updates
+```
+Ficheros: `src/main/.../service/UserService.java`
+
+**Commit 4 — Controlador REST:**
+```
+feat(backend): expose UserController endpoints for profile and technician operations
+```
+Ficheros: `src/main/.../controller/UserController.java`
+
+**Commit 5 — Tests de Integración H2:**
+```
+test(backend): add UserApiIntegrationTest covering technician lifecycle and profile updates
+```
+Ficheros: `src/test/.../integration/BaseApiIntegrationTest.java`, `src/test/.../integration/UserApiIntegrationTest.java`
+
+**Commit 6 — Documentación y Seguridad:**
+```
+docs: add user management notes and update development plan for Sprint 8
+```
+Ficheros: `notes/04 Plan de Desarrollo.md`, `notes/06 Roadmap Práctica 2.md`, `notes/12 Historial de Commits y Estrategia Git.md`, `notes/14 Gestion de Usuarios y Roles Backend.md`, `.gitignore`
+
+---
+
 ## Flujo de ramas y tags
 
 ```bash
 # Integrar sprint en develop
 git checkout develop
-git merge --no-ff feature/dashboard-summary -m "Merge práctica 1 completa con infraestructura Hetzner"
+git merge --no-ff feature/user-management -m "Merge Sprint 8 - Persistencia de usuarios y técnicos"
 
 # Liberar en main con tag semántico
 git checkout main
 git merge --no-ff develop
-git tag -a v1.0.0 -m "Práctica 1 - BlueDeploy con despliegue en Hetzner"
+git tag -a v1.1.0 -m "Práctica 2 - Persistencia de usuarios y endpoints de gestión"
 git push origin main --tags
 ```
 
@@ -147,4 +187,4 @@ git push origin main --tags
 |------|--------|-------------|
 | main | Estable | Versión de producción |
 | develop | Desarrollo | Integración de sprints |
-| feature/dashboard-summary | En curso | Sprint 6+7 — Frontend y despliegue |
+| feature/user-management | En curso | Sprint 8 — Persistencia de usuarios y gestión de técnicos |
