@@ -42,7 +42,7 @@ BlueDeployJson.ps1 Send-BlueDeployQueue.ps1
 ## Enviar cola
 
 ```powershell
-pwsh ./scripts/powershell/bluedeploy/Send-BlueDeployQueue.ps1 -QueuePath "./scripts/powershell/bluedeploy/examples/sample-queue" -ApiUrl "http://localhost:8080"
+pwsh ./scripts/powershell/bluedeploy/Send-BlueDeployQueue.ps1 -QueuePath "./scripts/powershell/bluedeploy/examples/sample-queue" -ApiUrl "http://178.105.231.10"
 ```
 
 

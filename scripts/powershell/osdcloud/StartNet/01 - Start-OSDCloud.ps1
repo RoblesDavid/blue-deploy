@@ -1,6 +1,6 @@
-﻿# ============================================================
-#  01 - Start-OSDCloud.ps1
-#  Version 2.0 - Correcciones de sintaxis y caracteres especiales
+# ============================================================
+#  01 - Start-OSDCloud.ps1 - BlueDeploy Deployment
+#  Version 2.0 - Despliegue Automatizado y Telemetría BlueDeploy
 # ============================================================
 
 param(
@@ -11,8 +11,8 @@ param(
 # SECCION 0: INICIALIZACION Y VALIDACION DE RUTAS
 # -----------------------------------------------------------------------
 
-# Codificacion de la contrasena en base64
-$PasswordEncoded = "dGVzdDEyMwo="
+# Codificacion de la contrasena en base64 (Entorno de Laboratorio / QEMU)
+$PasswordEncoded = "dGVzdDEyMw=="
 $PasswordDecoded = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($PasswordEncoded))
 
 # Determinacion de ruta de logs: En WinPE usa X:, en SO normal usa C:
@@ -31,7 +31,7 @@ $LogFile = "$LogPath\Deploy-$(Get-Date -Format 'yyyy-MM-dd_HHmmss').log"
 # Funcion para escribir logs
 function Write-Log {
     param(
-        [string]$Mensaje,
+        [string]$Mensaje, 
         [string]$Nivel = "INFO"
     )
     $Linea = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') [$Nivel] $Mensaje"
@@ -44,7 +44,7 @@ function Write-Log {
     })
 }
 
-Write-Log "=== INICIO DEL SCRIPT DE DESPLIEGUE  ===" "INFO"
+Write-Log "=== INICIO DEL SCRIPT DE DESPLIEGUE BLUEDEPLOY ===" "INFO"
 Write-Log "Entorno: $(if ($IsWinPE) { 'WinPE' } else { 'Windows Instalado' })" "INFO"
 Write-Log "Ruta de logs: $LogPath" "INFO"
 
@@ -80,7 +80,7 @@ if (-not $BlueDeployModuleLoaded) {
     function New-BlueDeployDeploymentId {
         param([string]$Hostname)
         $CurrentDate = Get-Date -Format "yyyyMMdd"
-        return "DEPLOY-OSDC-BlueDeploy-$Hostname-$CurrentDate"
+        return "DEPLOY-LAB-$Hostname-$CurrentDate"
     }
 
     function New-BlueDeployDeploymentJson {
@@ -180,8 +180,8 @@ Write-Log "Mostrando formulario de configuracion..." "INFO"
 
 # Creacion del Formulario
 $Form = New-Object System.Windows.Forms.Form
-$Form.Text = "Configuracion despliegue inicial"
-$Form.Size = New-Object System.Drawing.Size(400, 400)
+$Form.Text = "Configuracion BlueDeploy Lab"
+$Form.Size = New-Object System.Drawing.Size(400, 490)
 $Form.StartPosition = "CenterScreen"
 $Form.Topmost = $true
 $Form.BackColor = [System.Drawing.Color]::White
@@ -196,18 +196,44 @@ $Form.Controls.Add($LblNombre)
 $TxtNombre = New-Object System.Windows.Forms.TextBox
 $TxtNombre.Location = New-Object System.Drawing.Point(20, 45)
 $TxtNombre.Size = New-Object System.Drawing.Size(340, 20)
-$TxtNombre.Text = "Despliegue-PC"
+$TxtNombre.Text = "LAB-PC01"
 $Form.Controls.Add($TxtNombre)
+
+# Etiqueta: Descripcion del equipo
+$LblDescripcion = New-Object System.Windows.Forms.Label
+$LblDescripcion.Text = "Descripcion del equipo:"
+$LblDescripcion.Location = New-Object System.Drawing.Point(20, 80)
+$LblDescripcion.AutoSize = $true
+$Form.Controls.Add($LblDescripcion)
+
+$TxtDescripcion = New-Object System.Windows.Forms.TextBox
+$TxtDescripcion.Location = New-Object System.Drawing.Point(20, 105)
+$TxtDescripcion.Size = New-Object System.Drawing.Size(340, 20)
+$TxtDescripcion.Text = "Puesto de trabajo Laboratorio"
+$Form.Controls.Add($TxtDescripcion)
+
+# Etiqueta: Codigo CEGES / Inventario
+$LblCodigoCeges = New-Object System.Windows.Forms.Label
+$LblCodigoCeges.Text = "Codigo CEGES / Inventario:"
+$LblCodigoCeges.Location = New-Object System.Drawing.Point(20, 140)
+$LblCodigoCeges.AutoSize = $true
+$Form.Controls.Add($LblCodigoCeges)
+
+$TxtCodigoCeges = New-Object System.Windows.Forms.TextBox
+$TxtCodigoCeges.Location = New-Object System.Drawing.Point(20, 165)
+$TxtCodigoCeges.Size = New-Object System.Drawing.Size(340, 20)
+$TxtCodigoCeges.Text = "LAB-INV-001"
+$Form.Controls.Add($TxtCodigoCeges)
 
 # Etiqueta: Sistema Operativo
 $LblSO = New-Object System.Windows.Forms.Label
 $LblSO.Text = "Sistema Operativo a instalar:"
-$LblSO.Location = New-Object System.Drawing.Point(20, 85)
+$LblSO.Location = New-Object System.Drawing.Point(20, 200)
 $LblSO.AutoSize = $true
 $Form.Controls.Add($LblSO)
 
 $CmbSO = New-Object System.Windows.Forms.ComboBox
-$CmbSO.Location = New-Object System.Drawing.Point(20, 110)
+$CmbSO.Location = New-Object System.Drawing.Point(20, 225)
 $CmbSO.Size = New-Object System.Drawing.Size(340, 20)
 $CmbSO.DropDownStyle = [System.Windows.Forms.ComboBoxStyle]::DropDownList
 $CmbSO.Items.Add("1. Windows 11 Pro") | Out-Null
@@ -217,7 +243,7 @@ $Form.Controls.Add($CmbSO)
 # Checkbox: Confirmacion de Particiones
 $ChkPart = New-Object System.Windows.Forms.CheckBox
 $ChkPart.Text = "Confirmo el borrado de particiones y disco"
-$ChkPart.Location = New-Object System.Drawing.Point(20, 160)
+$ChkPart.Location = New-Object System.Drawing.Point(20, 275)
 $ChkPart.Size = New-Object System.Drawing.Size(340, 30)
 $ChkPart.ForeColor = [System.Drawing.Color]::Red
 $Form.Controls.Add($ChkPart)
@@ -225,7 +251,7 @@ $Form.Controls.Add($ChkPart)
 # Boton: Iniciar
 $BtnStart = New-Object System.Windows.Forms.Button
 $BtnStart.Text = "INICIAR DESPLIEGUE"
-$BtnStart.Location = New-Object System.Drawing.Point(100, 280)
+$BtnStart.Location = New-Object System.Drawing.Point(100, 365)
 $BtnStart.Size = New-Object System.Drawing.Size(180, 40)
 $BtnStart.DialogResult = [System.Windows.Forms.DialogResult]::OK
 $Form.Controls.Add($BtnStart)
@@ -245,6 +271,19 @@ if ($ChkPart.Checked -eq $false) {
 
 # Capturar valores del formulario
 $NombreEquipo = $TxtNombre.Text.ToUpper()
+$DescripcionEquipo = $TxtDescripcion.Text.Trim()
+$CodigoCeges = $TxtCodigoCeges.Text.Trim()
+
+if ([string]::IsNullOrWhiteSpace($DescripcionEquipo) -or [string]::IsNullOrWhiteSpace($CodigoCeges)) {
+    [System.Windows.Forms.MessageBox]::Show(
+        "Debe indicar la descripcion del equipo y el codigo CEGES / Inventario.",
+        "Datos incompletos",
+        [System.Windows.Forms.MessageBoxButtons]::OK,
+        [System.Windows.Forms.MessageBoxIcon]::Warning
+    ) | Out-Null
+    exit
+}
+
 $WimNumero = ($CmbSO.SelectedIndex + 1).ToString()
 
 # Generar DeploymentId
@@ -255,11 +294,21 @@ Write-Log "Configuracion aceptada: Equipo=$NombreEquipo, WIM_Index=$WimNumero, D
 # SECCION 4: VALIDACION DE ESTRUCTURA DE CARPETAS
 # -----------------------------------------------------------------------
 
-Write-Log "Validando estructura de carpetas en USB..." "INFO"
+Write-Log "Validando estructura de carpetas en USB/Medio de instalacion..." "INFO"
+
+$ScriptDrives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Name -ne 'X' -and $_.Name -ne 'C' }
+$UsbRoot = $null
+foreach ($Drive in $ScriptDrives) {
+    if (Test-Path "$($Drive.Root)OSDCloud") {
+        $UsbRoot = $Drive.Root
+        break
+    }
+}
+if (-not $UsbRoot) { $UsbRoot = "G:\" }
 
 $RequiredFolders = @(
-    "G:\OSDCloud\Scripts\SetupComplete",
-    "G:\OSDCloud\Config\Scripts\BlueDeploy"
+    (Join-Path $UsbRoot "OSDCloud\Scripts\SetupComplete"),
+    (Join-Path $UsbRoot "OSDCloud\Config\Scripts\BlueDeploy")
 )
 
 $MissingFolders = @()
@@ -274,11 +323,10 @@ foreach ($Folder in $RequiredFolders) {
 
 if ($MissingFolders.Count -gt 0) {
     Write-Log "Se encontraron $($MissingFolders.Count) carpetas faltantes en la estructura USB." "WARN"
-    Write-Log "Por favor, verifica la estructura del USB y corrige los siguientes directorios:" "WARN"
     foreach ($Folder in $MissingFolders) {
         Write-Log "  - $Folder" "WARN"
     }
-    Write-Log "Continuando de todas formas (algunos pasos pueden fallar)..." "WARN"
+    Write-Log "Continuando de todas formas..." "WARN"
 }
 
 # -----------------------------------------------------------------------
@@ -312,13 +360,16 @@ try {
     Write-Log "Error creando directorios: $_" "WARN"
 }
 
-# Guardar informacion de identidad
+# Guardar informacion de identidad (en UTF-8 limpio sin BOM para evitar fallos de lectura en PowerShell)
 try {
-    $NombreEquipo | Out-File -FilePath "$OSDCloudFolder\ComputerName.txt" -Encoding ascii -Force
-    $DeploymentId | Out-File -FilePath "$OSDCloudFolder\DeploymentId.txt" -Encoding ascii -Force
-    Write-Log "Informacion de identidad guardada" "OK"
+    [System.IO.File]::WriteAllText("$OSDCloudFolder\ComputerName.txt", $NombreEquipo, [System.Text.Encoding]::ASCII)
+    [System.IO.File]::WriteAllText("$OSDCloudFolder\DeploymentId.txt", $DeploymentId, [System.Text.Encoding]::ASCII)
+    $DatosEquipoContent = @("Descripcion=$DescripcionEquipo", "CodigoCEGES=$CodigoCeges")
+    [System.IO.File]::WriteAllLines("$OSDCloudFolder\DatosEquipo.txt", $DatosEquipoContent, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Log "Identidad, descripcion y codigo CEGES guardados" "OK"
 } catch {
-    Write-Log "Error guardando informacion de identidad: $_" "WARN"
+    Write-Log "Error guardando los datos del equipo: $_" "ERROR"
+    throw
 }
 
 # Generar JSON 000 de inicializacion
@@ -327,7 +378,7 @@ New-BlueDeployDeploymentJson `
     -DeploymentId $DeploymentId `
     -Hostname $NombreEquipo `
     -DeviceModel "UNKNOWN_WINPE" `
-    -DomainName "bluedeploy.domain" `
+    -DomainName "lab.local" `
     -QueuePath $QueueFolder `
     -FileName "000_deployment.json" `
     -SourceScript "01-Start-OSDCloud.ps1"
@@ -393,10 +444,12 @@ try {
     Write-Log "Error creando directorios finales: $_" "WARN"
 }
 
-# 2. Guardar informacion final
+# 2. Guardar informacion final sin BOM
 try {
-    $NombreEquipo | Out-File -FilePath "$TargetDrive\OSDCloud\ComputerName.txt" -Encoding ascii -Force
-    $DeploymentId | Out-File -FilePath "$BlueDeployStatePath\DeploymentId.txt" -Encoding ascii -Force
+    [System.IO.File]::WriteAllText("$TargetDrive\OSDCloud\ComputerName.txt", $NombreEquipo, [System.Text.Encoding]::ASCII)
+    [System.IO.File]::WriteAllText("$BlueDeployStatePath\DeploymentId.txt", $DeploymentId, [System.Text.Encoding]::ASCII)
+    $DatosEquipoContent = @("Descripcion=$DescripcionEquipo", "CodigoCEGES=$CodigoCeges")
+    [System.IO.File]::WriteAllLines("$BlueDeployStatePath\DatosEquipo.txt", $DatosEquipoContent, (New-Object System.Text.UTF8Encoding($false)))
     Write-Log "Informacion de identidad guardada en destino" "OK"
 } catch {
     Write-Log "Error guardando informacion en destino: $_" "WARN"
@@ -437,18 +490,23 @@ if (-not (Test-Path $UnattendFolder)) {
     New-Item -Path $UnattendFolder -ItemType Directory -Force | Out-Null
 }
 
-$UnattendXml = @'
+$UnattendXml = @"
 <?xml version="1.0" encoding="utf-8"?>
-<unattend xmlns="urn:schemas-microsoft-com:unattend" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+<unattend xmlns="urn:schemas-microsoft-com:unattend"
+          xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-  <!-- PASS: windowsPE - Configuracion inicial en WinPE -->
+  <!-- ========================= -->
+  <!-- PASS: windowsPE          -->
+  <!-- ========================= -->
   <settings pass="windowsPE">
-
-    <!-- Idioma y localizacion de WinPE -->
-    <component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-International-Core-WinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
       <SetupUILanguage>
         <UILanguage>es-ES</UILanguage>
-        <WillShowUI>Never</WillShowUI>
       </SetupUILanguage>
       <InputLocale>es-ES</InputLocale>
       <SystemLocale>es-ES</SystemLocale>
@@ -457,26 +515,50 @@ $UnattendXml = @'
       <UserLocale>es-ES</UserLocale>
     </component>
 
-    <!-- Configuracion de Setup -->
-    <component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
       <UserData>
         <AcceptEula>true</AcceptEula>
       </UserData>
     </component>
-
   </settings>
 
-  <!-- PASS: specialize - Configuracion despues de instalar Windows -->
+  <!-- ========================= -->
+  <!-- PASS: specialize          -->
+  <!-- ========================= -->
   <settings pass="specialize">
-
-    <!-- Nombre del equipo y zona horaria -->
-    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
       <ComputerName>$NombreEquipo</ComputerName>
       <TimeZone>Romance Standard Time</TimeZone>
     </component>
 
-    <!-- Configuracion de idioma y localizacion -->
-    <component name="Microsoft-Windows-International-Core" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
+    <component name="Microsoft-Windows-WindowsUpdate-AU"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
+      <NoAutoUpdate>true</NoAutoUpdate>
+      <AUOptions>1</AUOptions>
+    </component>
+  </settings>
+
+  <!-- ========================= -->
+  <!-- PASS: oobeSystem          -->
+  <!-- ========================= -->
+  <settings pass="oobeSystem">
+
+    <component name="Microsoft-Windows-International-Core"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
       <InputLocale>es-ES</InputLocale>
       <SystemLocale>es-ES</SystemLocale>
       <UILanguage>es-ES</UILanguage>
@@ -484,15 +566,12 @@ $UnattendXml = @'
       <UserLocale>es-ES</UserLocale>
     </component>
 
-  </settings>
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
 
-  <!-- PASS: oobeSystem - Configuracion del sistema de OOBE -->
-  <settings pass="oobeSystem">
-
-    <!-- Configuracion de Shell y OOBE -->
-    <component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS">
-
-      <!-- Configuracion de OOBE (Out of Box Experience) -->
       <OOBE>
         <HideEULAPage>true</HideEULAPage>
         <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
@@ -505,11 +584,11 @@ $UnattendXml = @'
         <ProtectYourPC>3</ProtectYourPC>
       </OOBE>
 
-      <!-- Cuentas de usuario locales -->
+      <!-- Cuenta local -->
       <UserAccounts>
         <LocalAccounts>
           <LocalAccount wcm:action="add">
-            <Name>OSDAdmin</Name>
+            <Name>Administrador</Name>
             <Group>Administrators</Group>
             <Password>
               <Value>$PasswordDecoded</Value>
@@ -517,38 +596,33 @@ $UnattendXml = @'
             </Password>
           </LocalAccount>
         </LocalAccounts>
-        <AdministratorPassword>
-          <Value>$PasswordDecoded</Value>
-          <PlainText>true</PlainText>
-        </AdministratorPassword>
       </UserAccounts>
 
       <!-- AutoLogon -->
       <AutoLogon>
+        <Enabled>true</Enabled>
+        <LogonCount>3</LogonCount>
+        <Username>Administrador</Username>
+        <Domain>.</Domain>
         <Password>
           <Value>$PasswordDecoded</Value>
           <PlainText>true</PlainText>
         </Password>
-        <Username>OSDAdmin</Username>
-        <Enabled>true</Enabled>
-        <LogonCount>3</LogonCount>
       </AutoLogon>
 
-      <!-- Zona horaria -->
       <TimeZone>Romance Standard Time</TimeZone>
-
     </component>
-
   </settings>
 
 </unattend>
-'@
+"@
 
 try {
-    $UnattendXml | Out-File -FilePath "$UnattendFolder\Unattend.xml" -Encoding utf8 -Force
-    Write-Log "Archivo Unattend.xml creado en $UnattendFolder" "OK"
+    # Guardar en UTF-8 limpio sin BOM
+    [System.IO.File]::WriteAllText("$UnattendFolder\unattend.xml", $UnattendXml, (New-Object System.Text.UTF8Encoding($false)))
+    Write-Log "Unattend.xml creado correctamente (UTF-8 limpio)" "OK"
 } catch {
-    Write-Log "Error creando Unattend.xml: $_" "WARN"
+    Write-Log "Error creando Unattend.xml: $_" "ERROR"
 }
 
 # -----------------------------------------------------------------------
@@ -562,18 +636,18 @@ if (Test-Path $SoftwareHive) {
     try {
         reg load HKLM\OfflineSOFTWARE $SoftwareHive 2>&1 | Out-Null
         $AUKey = "HKLM\OfflineSOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU"
-
+        
         if (-not (Test-Path "Registry::$AUKey")) {
             New-Item -Path "Registry::$AUKey" -Force | Out-Null
         }
-
+        
         reg add "$AUKey" /v "NoAutoUpdate" /t REG_DWORD /d 1 /f 2>&1 | Out-Null
         reg add "$AUKey" /v "AUOptions" /t REG_DWORD /d 1 /f 2>&1 | Out-Null
-
+        
         [GC]::Collect()
         Start-Sleep -Seconds 2
         reg unload HKLM\OfflineSOFTWARE 2>&1 | Out-Null
-
+        
         Write-Log "Windows Update deshabilitado correctamente" "OK"
     } catch {
         Write-Log "Error deshabilitando Windows Update: $_" "WARN"
@@ -593,12 +667,22 @@ if (-not (Test-Path $ScriptsDest)) {
     New-Item -Path $ScriptsDest -ItemType Directory -Force | Out-Null
 }
 
-$SourceScript = $null
-foreach ($Drive in @('D', 'E', 'F', 'G')) {
-    $Path = "${Drive}:\OSDCloud\Scripts\SetupComplete\SetupComplete.cmd"
-    if (Test-Path $Path) {
-        $SourceScript = $Path
-        break
+$SourceScript = "C:\OSDCloud\Scripts\SetupComplete\SetupComplete.cmd"
+if (-not (Test-Path $SourceScript)) {
+    $SourceScript = $null
+    $ScriptDrives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Name -ne 'C' }
+    foreach ($Drive in $ScriptDrives) {
+        foreach ($RelativePath in @(
+            "OSDCloud\Config\Scripts\SetupComplete\SetupComplete.cmd",
+            "OSDCloud\Scripts\SetupComplete\SetupComplete.cmd"
+        )) {
+            $Path = Join-Path $Drive.Root $RelativePath
+            if (Test-Path $Path) {
+                $SourceScript = $Path
+                break
+            }
+        }
+        if ($SourceScript) { break }
     }
 }
 
@@ -606,7 +690,7 @@ if ($SourceScript) {
     try {
         Copy-Item -Path $SourceScript -Destination "$ScriptsDest\SetupComplete.cmd" -Force
         Write-Log "SetupComplete.cmd copiado desde $SourceScript" "OK"
-
+        
         New-BlueDeployStepJson `
             -DeploymentId $DeploymentId `
             -StepName "SETUPCOMPLETE_COPIED" `
@@ -630,14 +714,14 @@ if ($SourceScript) {
             -SourceScript "01-Start-OSDCloud.ps1"
     }
 } else {
-    Write-Log "No se encontro SetupComplete.cmd en ninguna particion USB (D-G)" "WARN"
+    Write-Log "No se encontro SetupComplete.cmd en ninguna particion accesible" "WARN"
     New-BlueDeployStepJson `
         -DeploymentId $DeploymentId `
         -StepName "SETUPCOMPLETE_COPIED" `
         -StepStatus "WARNING" `
-        -Message "SetupComplete.cmd no encontrado en USB" `
+        -Message "SetupComplete.cmd no encontrado" `
         -ErrorCode "NOT_FOUND" `
-        -RawOutput "Buscadas rutas: D:\..., E:\..., F:\..., G:\..." `
+        -RawOutput "Buscadas rutas en unidades accesibles" `
         -QueuePath $FinalBlueDeployQueuePath `
         -FileName "030_setupcomplete_copied_step.json" `
         -SourceScript "01-Start-OSDCloud.ps1"
@@ -659,26 +743,16 @@ if (Test-Path $LogFile) {
 }
 
 # -----------------------------------------------------------------------
-# SECCION 12: GENERAR JSON FINAL DE COMPLETACION
+# SECCION 12: CIERRE DE LA FASE WINPE
 # -----------------------------------------------------------------------
 
-Write-Log "Generando JSON final de completacion..." "INFO"
-
-New-BlueDeployStepJson `
-    -DeploymentId $DeploymentId `
-    -StepName "DEPLOYMENT_COMPLETED" `
-    -StepStatus "SUCCESS" `
-    -Message "Despliegue OSDC-BlueDeploy completado exitosamente" `
-    -RawOutput "Hostname=$NombreEquipo; OSVersion=Windows11; TargetDrive=$TargetDrive" `
-    -QueuePath $FinalBlueDeployQueuePath `
-    -FileName "999_deployment_completed_step.json" `
-    -SourceScript "01-Start-OSDCloud.ps1"
+Write-Log "Fase WinPE completada; quedan pendientes las tareas SetupComplete y post-instalacion." "OK"
 
 # -----------------------------------------------------------------------
 # FINALIZACION
 # -----------------------------------------------------------------------
 
-Write-Log "====== DESPLIEGUE COMPLETADO ======" "OK"
+Write-Log "====== FASE WINPE COMPLETADA ======" "OK"
 Write-Log "DeploymentId: $DeploymentId" "OK"
 Write-Log "Equipo: $NombreEquipo" "OK"
 Write-Log "Logs guardados en: $DestLogPath" "OK"
@@ -686,13 +760,9 @@ Write-Log "Colas JSON guardadas en: $FinalBlueDeployQueuePath" "OK"
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
-Write-Host "[OK] Despliegue OSDC-BlueDeploy completado exitosamente" -ForegroundColor Green
+Write-Host "   FASE WINPE COMPLETADA EXITOSAMENTE                      " -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host ""
-
-# Mostrar confirmacion antes de reiniciar
-Write-Host "El sistema se reiniciara en 10 segundos..." -ForegroundColor Cyan
-Start-Sleep -Seconds 10
-
-Write-Log "Iniciando reinicio..." "INFO"
-Restart-Computer -Force
+Write-Host "El equipo se reiniciara para continuar con SetupComplete."
+Write-Host "Presione cualquier tecla para reiniciar inmediatamente..."
+Write-Host ""

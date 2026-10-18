@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
+    "createdAt":  "2026-10-02T11:25:02",
+    "sourceScript":  "JoinDomain.ps1",
+    "payload":  {
+                    "rawOutput":  "TaskName=AddComputerToADGroup_WSUS; Path=C:\\OSDCloud\\Scripts\\SetupComplete\\AddComputerToADGroup_WSUS.ps1; RunAs=System",
+                    "message":  "Next deployment orchestration task successfully registered in system schedule",
+                    "errorCode":  "",
+                    "stepName":  "AD_WSUS_TASK_REGISTERED",
+                    "stepStatus":  "SUCCESS"
+                }
+}

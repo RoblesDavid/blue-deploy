@@ -67,9 +67,32 @@ class DeploymentStepApiIntegrationTest extends BaseApiIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/deployments/{deploymentId}/steps", deploymentId)
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void registerStep_withAliasFields_shouldSucceed() throws Exception {
+        String deploymentId = "DEPLOY-PC202B-20260516";
+        createDeployment(deploymentId).andExpect(status().isOk());
+
+        String aliasPayload = """
+                {
+                  "stepName": "DOMAIN_JOIN",
+                  "status": "SUCCESS",
+                  "message": "Unido al dominio con alias"
+                }
+                """;
+
+        mockMvc.perform(post("/api/deployments/{deploymentId}/steps", deploymentId)
+                        .header(API_KEY_HEADER, TEST_API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(aliasPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stepName").value("DOMAIN_JOIN"))
+                .andExpect(jsonPath("$.stepStatus").value("SUCCESS"));
     }
 
     @Test
@@ -102,6 +125,7 @@ class DeploymentStepApiIntegrationTest extends BaseApiIntegrationTest {
                 """.formatted(stepName, stepStatus, stepName, stepStatus);
 
         return mockMvc.perform(post("/api/deployments/{deploymentId}/steps", deploymentId)
+                .header(API_KEY_HEADER, TEST_API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload));
     }

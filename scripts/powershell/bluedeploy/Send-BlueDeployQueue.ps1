@@ -7,7 +7,9 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$QueuePath,
 
-    [string]$ApiUrl = "http://192.168.18.2:8080",
+    [string]$ApiUrl = $(if ($env:BLUEDEPLOY_API_URL) { $env:BLUEDEPLOY_API_URL } else { "http://178.105.231.10" }),
+
+    [string]$ApiKey = $(if ($env:BLUEDEPLOY_API_KEY) { $env:BLUEDEPLOY_API_KEY } else { "bluedeploy-secret-key-change-in-prod" }),
 
     [switch]$ContinueOnError
 )
@@ -55,11 +57,18 @@ foreach ($file in $files) {
 
         Write-Host "  -> POST $uri" -ForegroundColor DarkCyan
 
+        # Construir cabeceras HTTP (incluyendo X-BlueDeploy-Api-Key si está disponible)
+        $headers = @{}
+        if ($ApiKey) {
+            $headers["X-BlueDeploy-Api-Key"] = $ApiKey
+        }
+
         # Realizar invocación HTTP hacia el backend
         $response = Invoke-RestMethod `
             -Method POST `
             -Uri $uri `
             -ContentType "application/json" `
+            -Headers $headers `
             -Body $body
 
         Write-Host "  [OK] Enviado con éxito $($event.eventType) para deploymentId=$($event.deploymentId)" -ForegroundColor Green

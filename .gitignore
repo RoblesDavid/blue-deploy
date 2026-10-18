@@ -13,6 +13,8 @@ out/
 
 # Docker & Config
 .env
+.env.*
+!.env.production.example
 .TokenAccess
 *.log
 logs/
@@ -24,7 +26,8 @@ mvnw
 Thumbs.db
 
 
-#Scripts locales OSDCloud
+# Scripts locales OSDCloud y temporales
 notes/Guias/
 notes/.obsidian/workspace.json
-
+scripts/powershell/osdcloud/Funcionando/
+tmp/

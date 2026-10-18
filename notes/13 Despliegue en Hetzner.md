@@ -1,192 +1,88 @@
+# Despliegue en Hetzner Cloud y Hardening de Producción
+
 ## Objetivo
 
-Desplegar BlueDeploy en un VPS de Hetzner Cloud con los tres servicios contenerizados: MariaDB, Spring Boot y Nginx (frontend + proxy inverso).
+Desplegar BlueDeploy en un VPS de Hetzner Cloud con arquitectura multicapa contenerizada: MariaDB 11, Spring Boot 3 / Java 21 y Nginx (frontend SPA React + reverse proxy con hardening y preparación SSL).
 
 ---
 
-## Arquitectura en producción
+## Arquitectura en Producción (Práctica 2)
 
-```
-Internet ──▶ Nginx :80 ──▶ /          → React SPA (estático)
-                       ──▶ /api/*     → Spring Boot :8080 (red interna)
+```text
+Internet ──▶ Nginx :80 / :443 (Reverse Proxy + SPA)
+                 │
+                 ├──▶ /              → React SPA (Estático con Cache-Control)
+                 ├──▶ /.well-known/  → Certbot Challenge (Let's Encrypt)
+                 └──▶ /api/*         → Spring Boot :8080 (Red interna blue-net)
                                               │
-                                         MariaDB :3306 (red interna)
+                                         MariaDB :3306 (Red interna blue-net)
 ```
 
-Solo Nginx expone un puerto al exterior (80). Los otros dos servicios viven en la red Docker interna `blue-net`, inaccesibles desde fuera del servidor.
+Solo Nginx expone puertos al exterior (80 y 443). MariaDB y Spring Boot residen de forma estricta en la red bridge interna `blue-net`, inaccesibles directamente desde Internet.
 
 ---
 
-## Archivos añadidos y por qué
+## Evolución Práctica 2 — Seguridad y Hardening
 
-### `frontend/Dockerfile`
+### Variables de entorno añadidas (`.env`):
+```text
+JWT_SECRET=
+BLUEDEPLOY_API_KEY=
+CORS_ALLOWED_ORIGINS=
+DB_NAME=bluedeploy_prod
+DB_USER=bluedeploy_user
+DB_PASSWORD=
+DB_ROOT_PASSWORD=
+SPRING_PROFILES_ACTIVE=prod
+```
 
-Build multi-etapa:
-- **Etapa 1 (Node 20 Alpine):** instala dependencias y ejecuta `npm run build` → genera `/app/dist`
-- **Etapa 2 (Nginx Alpine):** copia el bundle estático y el `nginx/default.conf`
-
-Sin este Dockerfile el frontend solo puede ejecutarse en modo desarrollo (`npm run dev`). En producción necesita un servidor de ficheros estáticos.
-
-### `nginx/default.conf`
-
-Configura Nginx para:
-1. `try_files $uri $uri/ /index.html` — redirige cualquier ruta desconocida a `index.html` para que React Router funcione (SPA HTML5 history)
-2. `location /api/` — reenvía las peticiones al backend `http://app:8080` mediante proxy inverso
-3. Caché agresiva (1 año) en assets JS/CSS/imágenes con nombre hasheado (Vite los hashea automáticamente)
-4. `server_tokens off` — oculta la versión de Nginx por seguridad
-
-### `docker-compose.prod.yml`
-
-Diferencias clave respecto a `docker-compose.yml` (desarrollo):
-
-| Aspecto | Desarrollo | Producción |
-|---------|-----------|------------|
-| MariaDB puerto externo | 3306:3306 | (no expuesto) |
-| Spring Boot puerto externo | 8080:8080 | (no expuesto) |
-| Frontend | no existe | nginx :80 |
-| Restart policy | always | unless-stopped |
-| Healthchecks | no | sí (orquesta el arranque) |
-| Red explícita | no | blue-net |
-
-### `.github/workflows/ci.yml`
-
-Ejecuta en cada push y PR:
-- Tests de integración del backend con H2
-- Build de producción del frontend (`npm run build`)
-- Lint del frontend
-
-Evita que llegue código roto a `main`.
-
-### `.github/workflows/deploy.yml`
-
-Se dispara únicamente al hacer push/merge a `main`. Pasos:
-1. Corre los tests (falla el deploy si hay errores)
-2. SSH al servidor Hetzner
-3. `git pull` + `docker compose build` + `docker compose up -d`
-4. Limpia imágenes antiguas
-
-Requiere configurar estos **Secrets** en GitHub → Settings → Secrets:
-- `HETZNER_HOST` — IP pública del VPS
-- `HETZNER_USER` — usuario SSH 
-- `HETZNER_SSH_KEY` — clave privada SSH 
-- `HETZNER_PORT` — (opcional) si el SSH no está en el 22
-
-### `scripts/deploy/setup-hetzner.sh`
-
-Script idempotente para preparar un VPS limpio:
-1. Actualiza el sistema
-2. Instala Docker + Docker Compose Plugin
-3. Crea usuario sin privilegios root
-4. Configura UFW: permite SSH (22), HTTP (80), HTTPS (443); bloquea el resto
-5. Clona el repositorio en `/opt/bluedeploy`
-6. Solicita editar el `.env` antes de continuar
-7. Lanza `docker compose -f docker-compose.prod.yml up -d`
-
-### `.env.production.example`
-
-Plantilla con todas las variables de entorno necesarias en producción, incluyendo marcadores para las de práctica 2 (JWT, API Key). El archivo `.env` real nunca debe commitearse.
+### Mejoras de seguridad aplicadas:
+- **Cabeceras HTTP de seguridad en Nginx (`nginx/default.conf`)**:
+  - `X-Frame-Options: DENY` (anti-clickjacking).
+  - `X-Content-Type-Options: nosniff` (anti-MIME sniffing).
+  - `Referrer-Policy: strict-origin-when-cross-origin`.
+  - `Content-Security-Policy`: restricción de orígenes de ejecución y conectividad.
+  - `server_tokens off`: ocultación de banner de versión de Nginx.
+- **Aislamiento de servicios**: MariaDB y backend sin mapeo de puertos al host (`ports: []` omitido).
+- **Políticas de firewall con UFW**: solo puertos 22 (SSH), 80 (HTTP) y 443 (HTTPS) abiertos.
+- **Backups automáticos de MariaDB**: script `backup-db.sh` configurado con compresión gzip y retención de 14 días.
+- **Preparación HTTPS / Certbot**: volumen `certbot_www` montado en `/.well-known/acme-challenge/`.
+- **Sanitización de logs**: ausencia total de tokens o credenciales en texto plano en la salida estándar y archivos de log.
 
 ---
 
-## Guía de despliegue paso a paso
+## Guía de Despliegue Paso a Paso
 
-### 1. Contratar el VPS en Hetzner
+### 1. Servidor de Producción Hetzner
+- **IP Pública:** `178.105.231.10`
+- **Ruta de la Aplicación:** `/opt/bluedeploy`
+- **Página de Inicio / Landing Page:** `http://178.105.231.10/` (con introducción, acceso a login y contacto de David Robles Gaona)
+- **Endpoint de Telemetría OSDCloud:** `http://178.105.231.10/api/deployments` (autenticado con `X-BlueDeploy-Api-Key`)
 
-- Ir a console.hetzner.com → Cloud → New Server
-- Imagen: **Ubuntu 22.04**
-- Tipo: **CX22** (2 vCPU, 4 GB RAM) — suficiente para la práctica
-- Región: Falkenstein (EU) o Helsinki
-- Añadir tu clave SSH pública en el proceso de creación
-
-### 2. Configurar el repositorio en GitHub
-
-Ir a tu repositorio → **Settings → Secrets and variables → Actions** y añadir:
-
-```
-HETZNER_HOST     → 1.2.3.4  (IP del servidor)
-HETZNER_USER     → root      (o el usuario deploy)
-HETZNER_SSH_KEY  → (pegar el contenido de tu clave privada ~/.ssh/id_ed25519)
-```
-
-Generar par de claves si no tienes:
+### 2. Sincronización Directa de Archivos mediante Rsync
+Para subir el código directamente al host manteniendo los archivos de entorno de producción:
 ```bash
-ssh-keygen -t ed25519 -C "bluedeploy-deploy" -f ~/.ssh/bluedeploy_deploy
-# Añadir la pública al servidor: ssh-copy-id -i ~/.ssh/bluedeploy_deploy.pub root@IP
+rsync -avz \
+  --exclude='.git/' \
+  --exclude='.env*' \
+  --exclude='node_modules/' \
+  --exclude='target/' \
+  ./ \
+  root@178.105.231.10:/opt/bluedeploy/
 ```
 
-### 3. Primer despliegue manual (una sola vez)
-
+### 3. Configuración de Secretos en el Servidor
 ```bash
-ssh root@IP_DEL_SERVIDOR
-
-# Descargar y ejecutar el script de setup
-curl -fsSL https://raw.githubusercontent.com/TU_USUARIO/blue-deploy/main/scripts/deploy/setup-hetzner.sh -o setup.sh
-bash setup.sh
+ssh root@178.105.231.10
+# Asegurar la existencia y permisos de .env
+cp /opt/bluedeploy/.env.production /opt/bluedeploy/.env 2>/dev/null || true
+chmod 600 /opt/bluedeploy/.env
 ```
 
-El script pedirá que edites el `.env` antes de continuar:
+### 4. Arranque y Verificación de Salud
 ```bash
-nano /opt/bluedeploy/.env
+cd /opt/bluedeploy
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps
+curl -i http://localhost/api/checks/health
 ```
-Rellenar con contraseñas reales (usar `openssl rand -base64 32` para generarlas).
-
-### 4. Verificar que está funcionando
-
-```bash
-# Desde el servidor:
-docker compose -f /opt/bluedeploy/docker-compose.prod.yml ps
-docker compose -f /opt/bluedeploy/docker-compose.prod.yml logs -f
-
-# Desde tu navegador:
-http://IP_DEL_SERVIDOR       → Login del dashboard React
-http://IP_DEL_SERVIDOR/api/checks/health  → {"status":"UP"}
-```
-
-### 5. Despliegues posteriores (automáticos)
-
-Cada vez que hagas push a `main`, GitHub Actions:
-1. Corre los tests
-2. SSH al servidor
-3. Reconstruye y reinicia los contenedores
-
-El tiempo de downtime es de ~30–60 segundos durante el rebuild.
-
----
-
-## Troubleshooting
-
-### El frontend devuelve 404 al recargar una ruta
-
-Verificar que `nginx/default.conf` tiene `try_files $uri $uri/ /index.html;`. Sin esto, Nginx busca el fichero físico y devuelve 404 para rutas SPA como `/admin/deployments`.
-
-### El frontend no puede llamar a `/api/`
-
-```bash
-docker compose -f docker-compose.prod.yml exec frontend nginx -t
-# Verificar que proxy_pass apunta a http://app:8080
-```
-
-### Spring Boot no arranca (error de conexión a BD)
-
-Los healthchecks garantizan el orden, pero MariaDB puede tardar en inicializar:
-```bash
-docker compose -f docker-compose.prod.yml logs db
-# Esperar a ver: "ready for connections" antes de que arranque app
-```
-
-### Los cambios en el código no se reflejan
-
-```bash
-docker compose -f docker-compose.prod.yml build --no-cache
-docker compose -f docker-compose.prod.yml up -d
-```
-
----
-
-## Pendiente (Práctica 2)
-
-- Añadir HTTPS con Let's Encrypt (opciones: Certbot + Nginx, o Caddy como proxy inverso)
-- Configurar dominio propio en Hetzner DNS
-- Añadir `.env` con `JWT_SECRET` y `API_KEY` para autenticación real
-- Monitorización con Grafana + Prometheus o Uptime Kuma
-- Backups automáticos del volumen `db_data` a Hetzner Object Storage

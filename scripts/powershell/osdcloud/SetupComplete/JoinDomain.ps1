@@ -1,5 +1,5 @@
 # ============================================================
-#  JoinDomain.ps1 - OSD-BlueDeploy Deployment (Sprint 5)
+#  JoinDomain.ps1 - BlueDeploy Deployment
 #  Une el equipo al dominio de forma automática.
 #  Configura autologon para el siguiente reinicio y registra
 #  la tarea AddComputerToADGroup_WSUS.
@@ -7,12 +7,12 @@
 
 Write-Host ""
 Write-Host "================================================="
-Write-Host "         UNION AL DOMINIO - OSD-BlueDeploy"
+Write-Host "         UNION AL DOMINIO - BLUEDEPLOY"
 Write-Host "================================================="
 Write-Host ""
 
 # -----------------------------------------------------------------------
-# 0. CONFIGURACIÓN DE ARQUITECTURA DE EVIDENCIAS Y CREDENCIALES OFUSCADAS
+# 0. CONFIGURACIÓN DE ARQUITECTURA DE EVIDENCIAS Y CREDENCIALES
 # -----------------------------------------------------------------------
 
 $QueueFolder = "C:\tmp\BlueDeploy\Queue"
@@ -26,16 +26,16 @@ if (Test-Path "C:\OSDCloud\ComputerName.txt") {
     $Hostname = (Get-Content "C:\OSDCloud\ComputerName.txt").Trim()
 }
 $CurrentDate  = Get-Date -Format "yyyyMMdd"
-$DeploymentId = "DEPLOY-OSD-BlueDeploy-$Hostname-$CurrentDate"
+$DeploymentId = "DEPLOY-LAB-$Hostname-$CurrentDate"
 
-# Decodificación segura de credenciales al vuelo (Evita texto plano)
-$Domain        = "bluedeploy.domain"
-$OUPath        = "OU=Equipos,OU=BLUEDEPLOY,OU=BLUEDEPLOY,OU=Granada,DC=bluedeploy.domain.es"
-$AdminUser     = "dmsas\Srvc_GR00MDT"
-$AdminPass     = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMwo='))
+# Variables de Dominio para entorno de laboratorio / QEMU
+$Domain        = if ($env:BLUEDEPLOY_DOMAIN) { $env:BLUEDEPLOY_DOMAIN } else { "lab.local" }
+$OUPath        = if ($env:BLUEDEPLOY_OU) { $env:BLUEDEPLOY_OU } else { "OU=Workstations,DC=lab,DC=local" }
+$AdminUser     = if ($env:BLUEDEPLOY_DOMAIN_ADMIN) { $env:BLUEDEPLOY_DOMAIN_ADMIN } else { "lab\Administrator" }
+$AdminPass     = if ($env:BLUEDEPLOY_DOMAIN_PASS) { $env:BLUEDEPLOY_DOMAIN_PASS } else { [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMw==')) }
 
-$AutoLogonUser = "OSDAdmin"
-$AutoLogonPass = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMwo='))
+$AutoLogonUser = "Administrador"
+$AutoLogonPass = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMw=='))
 
 $NextScript    = "C:\OSDCloud\Scripts\SetupComplete\AddComputerToADGroup_WSUS.ps1"
 $NextTask      = "AddComputerToADGroup_WSUS"
@@ -45,7 +45,6 @@ $LogFile       = "C:\OSDCloud\Logs\JoinDomain.log"
 $LogDir = Split-Path $LogFile -Parent
 if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
 
-# Función de Log original modificada para mantener consistencia en consola
 function Write-Log {
     param (
         [string]$Message,
@@ -100,96 +99,179 @@ function Write-BlueDeployStep {
 }
 
 # -----------------------------------------------------------------------
-# 1. EJECUCIÓN DE UNIÓN AL DOMINIO
+# 1. COMPROBAR EL DOMINIO Y ACTIVAR WINDOWS ANTES DE LA UNION
 # -----------------------------------------------------------------------
 
-Write-Log "Iniciando proceso de adicion al dominio: $Domain" "INFO"
+$DomainReady = $false
+$SkipJoin = $false
+Write-Log "Comprobando la pertenencia actual de $env:COMPUTERNAME al dominio..." "INFO"
 
 try {
-    # Convertir contraseña en SecureString para el comando Add-Computer
-    $SecPass = ConvertTo-SecureString $AdminPass -AsPlainText -Force
-    $Cred    = New-Object System.Management.Automation.PSCredential ($AdminUser, $SecPass)
-
-    # Ejecutar la unión de dominio nativa
-    Add-Computer -DomainName $Domain -OUPath $OUPath -Credential $Cred -Force -ErrorAction Stop
-
-    Write-Log "El equipo se ha unido correctamente al dominio $Domain." "OK"
-
-    # [EVIDENCIA 100 - ÉXITO REVISADO]
-    # Reemplazamos los signos '=' y las comas conflictivas por guiones y tuberías legibles en la base de datos
-    $SanitizedOU = $OUPath -replace '=', ':' -replace ',', ' | '
-
+    $ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+    $SkipJoin = $ComputerSystem.PartOfDomain -and ($ComputerSystem.Domain -ieq $Domain)
+} catch {
+    $DomainCheckError = $_.Exception.Message
+    Write-Log "No se pudo comprobar la pertenencia al dominio: $DomainCheckError" "ERROR"
     Write-BlueDeployStep -StepNumber "100" `
+                         -StepName "JOIN_DOMAIN_EXECUTION" `
+                         -StepStatus "FAILED" `
+                         -Message "No se pudo comprobar la pertenencia del equipo al dominio." `
+                         -ErrorCode "DOMAIN_MEMBERSHIP_CHECK_FAILURE" `
+                         -RawOutput $DomainCheckError
+    exit 1
+}
+
+if ($SkipJoin) {
+    $DomainReady = $true
+    Write-Log "El equipo ya pertenece al dominio esperado $Domain; no se repetira la union." "OK"
+    Write-BlueDeployStep -StepNumber "098" `
+                         -StepName "WINDOWS_ACTIVATION" `
+                         -StepStatus "SKIPPED" `
+                         -Message "La activación OA3 se omitió porque el equipo ya está unido al dominio esperado." `
+                         -RawOutput "AlreadyJoined=True; Domain=$Domain"
+    Write-BlueDeployStep -StepNumber "100" `
+                         -StepName "JOIN_DOMAIN_EXECUTION" `
+                         -StepStatus "SUCCESS" `
+                         -Message "El equipo ya estaba unido al dominio esperado; no se intentó una nueva unión." `
+                         -RawOutput "Domain=$($ComputerSystem.Domain); AlreadyJoined=True"
+} else {
+    Write-Log "Fase de activacion OA3 antes de unir al dominio..." "INFO"
+    $ActivationStatus = "WARNING"
+    $ActivationErrorCode = $null
+    $ActivationOutput = ""
+
+    try {
+        $ProductKey = (Get-CimInstance -ClassName SoftwareLicensingService -ErrorAction Stop).OA3xOriginalProductKey
+        if ([string]::IsNullOrWhiteSpace($ProductKey)) {
+            $ActivationOutput = "OA3KeyAvailable=False"
+            Write-Log "No se encontro una clave OA3 en el firmware; se continuara con la union." "WARN"
+        } else {
+            $KeyOutput = & cscript.exe //B "$env:SystemRoot\System32\slmgr.vbs" /ipk $ProductKey 2>&1
+            $KeyExitCode = $LASTEXITCODE
+            if ($KeyExitCode -ne 0) {
+                throw "slmgr /ipk fallo con codigo $KeyExitCode. $($KeyOutput -join ' ')"
+            }
+
+            Start-Sleep -Seconds 2
+            $ActivationOutput = & cscript.exe //B "$env:SystemRoot\System32\slmgr.vbs" /ato 2>&1
+            $ActivationExitCode = $LASTEXITCODE
+            if ($ActivationExitCode -eq 0) {
+                $ActivationStatus = "SUCCESS"
+                Write-Log "Comandos de activacion OA3 enviados correctamente." "OK"
+            } else {
+                $ActivationErrorCode = "WINDOWS_ACTIVATION_COMMAND_FAILURE"
+                Write-Log "El comando de activacion devolvio el codigo $ActivationExitCode." "WARN"
+            }
+            $ActivationOutput = "OA3KeyInstalled=True; ActivationExitCode=$ActivationExitCode; Output=$($ActivationOutput -join ' ')"
+        }
+    } catch {
+        $ActivationErrorCode = "WINDOWS_ACTIVATION_ERROR"
+        $ActivationOutput = $_.Exception.Message
+        Write-Log "No se pudo completar la activacion OA3: $ActivationOutput" "WARN"
+    }
+
+    Write-BlueDeployStep -StepNumber "098" `
+                         -StepName "WINDOWS_ACTIVATION" `
+                         -StepStatus $ActivationStatus `
+                         -Message "Se intentó la activación OA3 antes de unir el equipo al dominio." `
+                         -ErrorCode $ActivationErrorCode `
+                         -RawOutput $ActivationOutput
+
+    Write-Log "Iniciando la union al dominio $Domain..." "INFO"
+    try {
+        $SecurePass = ConvertTo-SecureString $AdminPass -AsPlainText -Force
+        $Credential = New-Object System.Management.Automation.PSCredential($AdminUser, $SecurePass)
+        Add-Computer -DomainName $Domain -OUPath $OUPath -Credential $Credential -Force -ErrorAction Stop
+
+        $DomainReady = $true
+        $SanitizedOU = $OUPath -replace '=', ':' -replace ',', ' | '
+        Write-Log "La solicitud de union al dominio se completo correctamente." "OK"
+        Write-BlueDeployStep -StepNumber "100" `
                              -StepName "JOIN_DOMAIN_EXECUTION" `
                              -StepStatus "SUCCESS" `
-                             -Message "The computer successfully joined the active directory domain structure" `
-                             -ErrorCode $null `   <--- Asegurar que va un $null real de PowerShell, no "" ni 0
-                             -RawOutput "Domain [$Domain] - OUPath [$SanitizedOU]"
-
-    # -----------------------------------------------------------------------
-    # 2. CONFIGURAR AUTOLOGON DE TRANSICIÓN POST-REINICIO
-    # -----------------------------------------------------------------------
-    Write-Log "Configurando AutoLogon local temporal de continuidad..." "INFO"
-
-    $WinLogon = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
-    Set-ItemProperty -Path $WinLogon -Name "AutoAdminLogon"    -Value "1"             -Type String -Force
-    Set-ItemProperty -Path $WinLogon -Name "DefaultUserName"   -Value $AutoLogonUser   -Type String -Force
-    Set-ItemProperty -Path $WinLogon -Name "DefaultPassword"   -Value $AutoLogonPass   -Type String -Force
-    Set-ItemProperty -Path $WinLogon -Name "AutoLogonCount"    -Value 2               -Type DWord  -Force
-    Set-ItemProperty -Path $WinLogon -Name "DefaultDomainName" -Value "."             -Type String -Force
-
-    Write-Log "Autologon configurado correctamente para la cuenta local '$AutoLogonUser'." "OK"
-
-    # [EVIDENCIA 110] Registro de AutoLogon establecido
-    Write-BlueDeployStep -StepNumber "110" `
-                         -StepName "JOIN_DOMAIN_AUTOLOGON_CONFIG" `
-                         -StepStatus "SUCCESS" `
-                         -Message "Transition AutoLogon credentials written to registry keys successfully" `
-                         -RawOutput "AutoLogonUser=$AutoLogonUser; Count=2"
-
-} catch {
-    $ErrorMsg = $_.Exception.Message
-    Write-Log "No se pudo unir al dominio. Detalle: $ErrorMsg" "ERROR"
-
-    # [EVIDENCIA 100 - FALLO CRÍTICO]
-    # [EVIDENCIA 100 - FALLO CRÍTICO REVISADO]
-        $SanitizedError = $ErrorMsg -replace '"', "'" -replace '=', '-'
+                             -Message "El equipo fue enviado correctamente para unirse al dominio esperado." `
+                             -RawOutput "Domain=$Domain; OUPath=$SanitizedOU; AlreadyJoined=False"
+    } catch {
+        $DomainError = $_.Exception.Message -replace '"', "'" -replace '=', '-'
+        Write-Log "No se pudo unir el equipo al dominio. Detalle: $DomainError" "ERROR"
         Write-BlueDeployStep -StepNumber "100" `
                              -StepName "JOIN_DOMAIN_EXECUTION" `
                              -StepStatus "FAILED" `
-                             -Message "Active Directory join command failed operationally" `
+                             -Message "El equipo no pudo unirse al dominio esperado." `
                              -ErrorCode "DOMAIN_JOIN_FAILURE" `
-                             -RawOutput "Domain [$Domain] - Error: $SanitizedError"
+                             -RawOutput "Domain=$Domain; Error=$DomainError"
+    }
+}
 
-    Write-Host "Posibles causas: Credenciales incorrectas, falta de conectividad RADIUS o conflicto de nombre." -ForegroundColor Yellow
+if (-not $DomainReady) {
+    Write-Log "No se programara la fase WSUS porque fallo la union al dominio." "ERROR"
+    exit 1
 }
 
 # -----------------------------------------------------------------------
-# 3. ELIMINAR ESTA TAREA Y REGISTRAR LA SIGUIENTE (WSUS POLICY APPLICATION)
+# 2. CONFIGURAR AUTOLOGON LOCAL DE TRANSICION
 # -----------------------------------------------------------------------
 
-Write-Log "Limpiando tarea actual JoinDomain..." "INFO"
-schtasks /delete /tn "JoinDomain" /f | Out-Null
+try {
+    Write-Log "Configurando AutoLogon local temporal de continuidad..." "INFO"
+    $WinLogon = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+    Set-ItemProperty -Path $WinLogon -Name "AutoAdminLogon" -Value "1" -Type String -Force -ErrorAction Stop
+    Set-ItemProperty -Path $WinLogon -Name "DefaultUserName" -Value $AutoLogonUser -Type String -Force -ErrorAction Stop
+    Set-ItemProperty -Path $WinLogon -Name "DefaultPassword" -Value $AutoLogonPass -Type String -Force -ErrorAction Stop
+    Set-ItemProperty -Path $WinLogon -Name "AutoLogonCount" -Value 2 -Type DWord -Force -ErrorAction Stop
+    Set-ItemProperty -Path $WinLogon -Name "DefaultDomainName" -Value "." -Type String -Force -ErrorAction Stop
+
+    Write-Log "Autologon configurado para la cuenta local '$AutoLogonUser'." "OK"
+    Write-BlueDeployStep -StepNumber "110" `
+                         -StepName "JOIN_DOMAIN_AUTOLOGON_CONFIG" `
+                         -StepStatus "SUCCESS" `
+                         -Message "Las credenciales de AutoLogon de transición se escribieron para la cuenta local de Administrador." `
+                         -RawOutput "AutoLogonUser=$AutoLogonUser; Count=2; Domain=."
+} catch {
+    $AutoLogonError = $_.Exception.Message
+    Write-Log "No se pudo configurar AutoLogon: $AutoLogonError" "ERROR"
+    Write-BlueDeployStep -StepNumber "110" `
+                         -StepName "JOIN_DOMAIN_AUTOLOGON_CONFIG" `
+                         -StepStatus "FAILED" `
+                         -Message "No se pudo configurar el AutoLogon de transición." `
+                         -ErrorCode "AUTOLOGON_CONFIGURATION_FAILURE" `
+                         -RawOutput $AutoLogonError
+    exit 1
+}
+
+# -----------------------------------------------------------------------
+# 3. REGISTRAR LA SIGUIENTE TAREA Y REINICIAR
+# -----------------------------------------------------------------------
 
 Write-Log "Registrando la proxima tarea programada: $NextTask" "INFO"
-schtasks /create /tn $NextTask `
-    /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File $NextScript" `
-    /sc ONLOGON /ru "System" | Out-Null
+$TaskCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$NextScript`""
+$TaskOutput = & schtasks.exe /create /tn $NextTask /tr $TaskCommand /sc ONLOGON /ru "SYSTEM" /rl HIGHEST /f 2>&1
+$TaskExitCode = $LASTEXITCODE
 
-# [EVIDENCIA 115] Registro del agendamiento de la tarea de políticas AD / WSUS
-Write-BlueDeployStep -StepNumber "115" `
-                     -StepName "AD_WSUS_TASK_REGISTERED" `
-                     -StepStatus "SUCCESS" `
-                     -Message "Next deployment orchestration task successfully registered in system schedule" `
-                     -RawOutput "TaskName=$NextTask; Path=$NextScript; RunAs=System"
+if ($TaskExitCode -eq 0) {
+    Write-Log "Tarea '$NextTask' registrada correctamente bajo SYSTEM." "OK"
+    & schtasks.exe /delete /tn "JoinDomain" /f 2>&1 | Out-Null
+    Write-BlueDeployStep -StepNumber "115" `
+                         -StepName "AD_WSUS_TASK_REGISTERED" `
+                         -StepStatus "SUCCESS" `
+                         -Message "La siguiente tarea de orquestación de políticas WSUS se registró correctamente." `
+                         -RawOutput "TaskName=$NextTask; Path=$NextScript; RunAs=SYSTEM; Trigger=ONLOGON"
+} else {
+    $TaskError = $TaskOutput -join " "
+    Write-Log "Fallo al registrar '$NextTask': $TaskError" "ERROR"
+    Write-BlueDeployStep -StepNumber "115" `
+                         -StepName "AD_WSUS_TASK_REGISTERED" `
+                         -StepStatus "FAILED" `
+                         -Message "La siguiente tarea de orquestación de políticas WSUS no pudo registrarse." `
+                         -ErrorCode "SCHTASKS_REGISTRATION_FAILURE" `
+                         -RawOutput "TaskName=$NextTask; ExitCode=$TaskExitCode; Output=$TaskError"
+    exit 1
+}
 
-# Finalización del ciclo y reinicio
 Write-Host ""
 Write-Host "================================================="
-Write-Log  "Script JoinDomain finalizado correctamente. Reiniciando..." "OK"
+Write-Log "Fase de dominio completada. Reiniciando..." "OK"
 Write-Host "================================================="
-Write-Host ""
-
-Write-Host "Reiniciando en 5 segundos... (Ctrl+C para cancelar)"
-Start-Sleep 5
-# Restart-Computer -Force
+Write-Host "Reiniciando en 5 segundos..."
+Start-Sleep -Seconds 5
+Restart-Computer -Force

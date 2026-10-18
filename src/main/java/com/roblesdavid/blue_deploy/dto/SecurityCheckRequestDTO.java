@@ -1,5 +1,6 @@
 package com.roblesdavid.blue_deploy.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.roblesdavid.blue_deploy.model.CheckStatus;
 import com.roblesdavid.blue_deploy.model.Severity;
 import jakarta.validation.constraints.NotBlank;
@@ -13,9 +14,11 @@ import java.time.LocalDateTime;
 public class SecurityCheckRequestDTO {
 
     @NotBlank(message = "checkName no puede estar vacío")
+    @JsonAlias({"name", "checkType", "check_type", "check_name"})
     private String checkName;
 
     @NotNull(message = "checkStatus no puede ser null")
+    @JsonAlias({"status", "state", "check_status"})
     private CheckStatus checkStatus;
 
     @NotNull(message = "severity no puede ser null")

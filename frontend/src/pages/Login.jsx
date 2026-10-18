@@ -1,13 +1,7 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Shield, Eye, EyeOff, LogIn } from 'lucide-react'
+import { useNavigate, Link } from 'react-router-dom'
+import { Shield, Eye, EyeOff, LogIn, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-
-const DEMO_USERS = [
-  { label: 'Administrador', username: 'admin', password: 'admin', color: 'purple' },
-  { label: 'Carlos (Técnico)', username: 'carlos', password: 'tecnico1', color: 'blue' },
-  { label: 'Ana (Técnico)', username: 'ana', password: 'tecnico2', color: 'cyan' },
-]
 
 export default function Login() {
   const { login } = useAuth()
@@ -23,8 +17,8 @@ export default function Login() {
     setError('')
     setLoading(true)
 
-    await new Promise((r) => setTimeout(r, 300)) // UX delay
-    const result = login(username, password)
+    await new Promise((r) => setTimeout(r, 200)) // UX delay
+    const result = await login(username, password)
     setLoading(false)
 
     if (!result.success) {
@@ -33,12 +27,6 @@ export default function Login() {
     }
 
     navigate(result.user.role === 'ADMIN' ? '/admin' : '/technician', { replace: true })
-  }
-
-  function fillDemo(u, p) {
-    setUsername(u)
-    setPassword(p)
-    setError('')
   }
 
   return (
@@ -121,32 +109,19 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo users */}
-          <div className="mt-6 pt-5 border-t border-slate-800">
-            <p className="text-slate-500 text-xs text-center mb-3">Acceso rápido (modo demo)</p>
-            <div className="grid grid-cols-3 gap-2">
-              {DEMO_USERS.map(({ label, username: u, password: p, color }) => (
-                <button
-                  key={u}
-                  type="button"
-                  onClick={() => fillDemo(u, p)}
-                  className={`py-2 px-3 rounded-xl text-xs font-medium transition-all border ${
-                    color === 'purple'
-                      ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 hover:bg-purple-500/20'
-                      : color === 'cyan'
-                      ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 hover:bg-cyan-500/20'
-                      : 'bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+          <div className="mt-6 pt-6 border-t border-slate-800 text-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-blue-400 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Volver a la página principal / Introducción</span>
+            </Link>
           </div>
         </div>
 
         <p className="text-slate-600 text-xs text-center mt-6">
-          Blue Deploy · Blue Team Platform · Práctica 1
+          Blue Deploy · SecOps Workplace Platform · Práctica 2
         </p>
       </div>
     </div>

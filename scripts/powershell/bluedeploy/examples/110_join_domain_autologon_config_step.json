@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
+    "createdAt":  "2026-10-02T11:25:02",
+    "sourceScript":  "JoinDomain.ps1",
+    "payload":  {
+                    "rawOutput":  "AutoLogonUser=test1; Count=2",
+                    "message":  "Transition AutoLogon credentials written to registry keys successfully",
+                    "errorCode":  "",
+                    "stepName":  "JOIN_DOMAIN_AUTOLOGON_CONFIG",
+                    "stepStatus":  "SUCCESS"
+                }
+}

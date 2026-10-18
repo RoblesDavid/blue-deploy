@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { Search, Filter } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Filter, RefreshCw } from 'lucide-react'
 import DeploymentTable from '../../components/deployments/DeploymentTable'
-import { MOCK_DEPLOYMENTS } from '../../data/mockDeployments'
-import { MOCK_USERS } from '../../data/mockUsers'
+import deploymentsApi from '../../api/deploymentsApi'
+import usersApi from '../../api/usersApi'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos los estados' },
@@ -16,26 +16,49 @@ const STATUS_OPTIONS = [
 ]
 
 export default function AllDeployments() {
+  const [deployments, setDeployments] = useState([])
+  const [technicians, setTechnicians] = useState([])
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [techFilter, setTechFilter] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  const technicians = MOCK_USERS.filter((u) => u.role === 'TECHNICIAN')
+  async function loadData() {
+    try {
+      setLoading(true)
+      const [depsRes, techsRes] = await Promise.all([
+        deploymentsApi.getDeployments().catch(() => []),
+        usersApi.getTechnicians().catch(() => []),
+      ])
+      setDeployments(depsRes || [])
+      setTechnicians(techsRes || [])
+    } catch (err) {
+      console.error('Error loading deployments:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const filtered = MOCK_DEPLOYMENTS.filter((d) => {
-    const matchSearch =
-      !search ||
-      d.hostname.toLowerCase().includes(search.toLowerCase()) ||
-      d.deploymentId.toLowerCase().includes(search.toLowerCase()) ||
-      d.deviceModel.toLowerCase().includes(search.toLowerCase())
-    const matchStatus = !statusFilter || d.deploymentStatus === statusFilter
-    const matchTech = !techFilter || d.technicianId === techFilter
-    return matchSearch && matchStatus && matchTech
-  }).sort((a, b) => new Date(b.lastSeenAt) - new Date(a.lastSeenAt))
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const filtered = useMemo(() => {
+    return deployments.filter((d) => {
+      const matchSearch =
+        !search ||
+        (d.hostname && d.hostname.toLowerCase().includes(search.toLowerCase())) ||
+        (d.deploymentId && d.deploymentId.toLowerCase().includes(search.toLowerCase())) ||
+        (d.deviceModel && d.deviceModel.toLowerCase().includes(search.toLowerCase()))
+      const matchStatus = !statusFilter || d.deploymentStatus === statusFilter
+      const matchTech = !techFilter || String(d.technicianId) === String(techFilter) || d.technicianUsername === techFilter
+      return matchSearch && matchStatus && matchTech
+    }).sort((a, b) => new Date(b.lastSeenAt || b.startedAt || 0) - new Date(a.lastSeenAt || a.startedAt || 0))
+  }, [deployments, search, statusFilter, techFilter])
 
   return (
     <div className="space-y-5">
-      {/* Filters */}
+      {/* Filters and Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -69,21 +92,35 @@ export default function AllDeployments() {
           >
             <option value="">Todos los técnicos</option>
             {technicians.map((t) => (
-              <option key={t.username} value={t.username}>{t.name}</option>
+              <option key={t.id || t.username} value={t.id || t.username}>{t.name}</option>
             ))}
           </select>
+
+          <button
+            onClick={loadData}
+            title="Recargar"
+            className="p-2.5 bg-slate-800 border border-slate-700 rounded-xl text-slate-300 hover:text-white hover:bg-slate-700 transition-all"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results Table */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl">
         <div className="px-5 py-4 border-b border-slate-700/50 flex items-center justify-between">
-          <h2 className="text-white font-semibold text-sm">Despliegues</h2>
+          <h2 className="text-white font-semibold text-sm">Inventario de Despliegues</h2>
           <span className="text-slate-500 text-xs bg-slate-700/50 px-2.5 py-1 rounded-full">
             {filtered.length} resultados
           </span>
         </div>
-        <DeploymentTable deployments={filtered} showTechnician />
+        {loading && deployments.length === 0 ? (
+          <div className="flex items-center justify-center p-12">
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <DeploymentTable deployments={filtered} showTechnician onRefresh={loadData} />
+        )}
       </div>
     </div>
   )

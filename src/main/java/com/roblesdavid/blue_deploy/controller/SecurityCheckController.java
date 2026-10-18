@@ -4,9 +4,11 @@ import com.roblesdavid.blue_deploy.dto.SecurityCheckRequestDTO;
 import com.roblesdavid.blue_deploy.dto.SecurityCheckResponseDTO;
 import com.roblesdavid.blue_deploy.service.SecurityCheckService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador REST para checks de seguridad asociados a un deployment.
@@ -34,6 +36,27 @@ public class SecurityCheckController {
             @Valid @RequestBody SecurityCheckRequestDTO dto
     ) {
         return service.registerCheck(deploymentId, dto);
+    }
+
+    /**
+     * Permite a un técnico o administrador resolver/remediar una comprobación de seguridad pendiente o fallida.
+     *
+     * @param deploymentId identificador del deployment
+     * @param checkId id de la comprobación
+     * @param payload mensaje o nota opcional de resolución
+     * @param authentication contexto del usuario autenticado
+     * @return check actualizado
+     */
+    @PutMapping("/{checkId}/resolve")
+    public SecurityCheckResponseDTO resolveCheck(
+            @PathVariable String deploymentId,
+            @PathVariable Long checkId,
+            @RequestBody(required = false) Map<String, String> payload,
+            Authentication authentication
+    ) {
+        String message = payload != null ? payload.getOrDefault("message", payload.get("resolutionNote")) : null;
+        String actor = authentication != null ? authentication.getName() : "Técnico";
+        return service.resolveCheck(deploymentId, checkId, message, actor);
     }
 
     /**

@@ -1,5 +1,5 @@
 # ============================================================
-#  AddComputerToADGroup_WSUS.ps1 - OSD-BlueDeploy Deployment
+#  AddComputerToADGroup_WSUS.ps1 - BlueDeploy Deployment
 #  Se ejecuta tras JoinDomain y el primer reinicio en dominio.
 #  Fuerza gpupdate, luego agrega el equipo al grupo de AD para
 #  politicas WSUS. Al finalizar registra la tarea InstallSoftware.ps1
@@ -7,12 +7,12 @@
 
 Write-Host ""
 Write-Host "================================================="
-Write-Host "     POLITICAS GPUPDATE Y GRUPO AD - OSD-BlueDeploy"
+Write-Host "     POLITICAS GPUPDATE Y GRUPO AD - BLUEDEPLOY"
 Write-Host "================================================="
 Write-Host ""
 
 # -----------------------------------------------------------------------
-# 0. CONFIGURACIÓN DE ARQUITECTURA DE EVIDENCIAS Y CREDENCIALES OFUSCADAS
+# 0. CONFIGURACIÓN DE ARQUITECTURA DE EVIDENCIAS Y CREDENCIALES
 # -----------------------------------------------------------------------
 
 $QueueFolder = "C:\tmp\BlueDeploy\Queue"
@@ -26,24 +26,22 @@ if (Test-Path "C:\OSDCloud\ComputerName.txt") {
     $Hostname = (Get-Content "C:\OSDCloud\ComputerName.txt").Trim()
 }
 $CurrentDate  = Get-Date -Format "yyyyMMdd"
-$DeploymentId = "DEPLOY-OSD-BlueDeploy-$Hostname-$CurrentDate"
+$DeploymentId = "DEPLOY-LAB-$Hostname-$CurrentDate"
 
-# Credenciales de servicio (Ofuscadas en Base64 para evitar texto plano)
-$AdminUser   = "bluedeploy\OSDAdmin_BlueDeploy"
-$AdminPass   = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMwo='))
-$SecurePass  = ConvertTo-SecureString $AdminPass -AsPlainText -Force
-$Credential  = New-Object System.Management.Automation.PSCredential($AdminUser, $SecurePass)
+# Variables de Dominio y Grupo para entorno de laboratorio / QEMU
+$Domain     = if ($env:BLUEDEPLOY_DOMAIN) { $env:BLUEDEPLOY_DOMAIN } else { "lab.local" }
+$AdminUser  = if ($env:BLUEDEPLOY_DOMAIN_ADMIN) { $env:BLUEDEPLOY_DOMAIN_ADMIN } else { "lab\Administrator" }
+$AdminPass  = if ($env:BLUEDEPLOY_DOMAIN_PASS) { $env:BLUEDEPLOY_DOMAIN_PASS } else { [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMw==')) }
+$GroupName  = if ($env:BLUEDEPLOY_WSUS_GROUP) { $env:BLUEDEPLOY_WSUS_GROUP } else { "WSUS_COMPUTERS_GROUP" }
 
-$GroupName   = "GR40_GG_WSUS_W10_PRO"
-$LogFile     = "C:\OSDCloud\Logs\AddComputerToADGroup_WSUS.log"
-$NextScript  = "C:\OSDCloud\Scripts\SetupComplete\InstallSoftware.ps1"
-$NextTask    = "InstallSoftware"
+$LogFile    = "C:\OSDCloud\Logs\AddComputerToADGroup_WSUS.log"
+$NextScript = "C:\OSDCloud\Scripts\SetupComplete\InstallSoftware.ps1"
+$NextTask   = "InstallSoftware"
 
 # Crear directorio de logs si no existe
 $LogDir = Split-Path $LogFile -Parent
 if (-not (Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir -Force | Out-Null }
 
-# Función de log original adaptada para mantener visualización en consola
 function Write-Log {
     param(
         [string]$Message,
@@ -78,9 +76,7 @@ function Write-BlueDeployStep {
     $CleanStepName = $StepName.ToLower()
     $JsonFileName  = "{0}_{1}_step.json" -f $StepNumber, $CleanStepName
     $JsonPath      = Join-Path $QueueFolder $JsonFileName
-    # Si ErrorCode es null o string vacio, forzamos un $null real para evitar el error 400 en la API
     $FinalErrorCode = if ([string]::IsNullOrEmpty($ErrorCode)) { $null } else { $ErrorCode }
-    $JsonErrorCode = if ([string]::IsNullOrEmpty($ErrorCode)) { [System.DBNull]::Value } else { $ErrorCode }
 
     $EventData = [ordered]@{
         "eventType"    = "DEPLOYMENT_STEP"
@@ -92,7 +88,7 @@ function Write-BlueDeployStep {
             "stepName"   = $StepName
             "stepStatus" = $StepStatus
             "message"    = $Message
-            "errorCode"  = $JsonErrorCode  # <--- Asignación con nulidad estricta para el parser de Java
+            "errorCode"  = $FinalErrorCode  
             "rawOutput"  = $RawOutput
         }
     }
@@ -115,7 +111,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-BlueDeployStep -StepNumber "120" `
                          -StepName "GROUP_POLICY_UPDATE" `
                          -StepStatus "SUCCESS" `
-                         -Message "Group policies updated successfully on the device" `
+                         -Message "Las directivas de grupo se actualizaron correctamente en el dispositivo" `
                          -RawOutput "ExitCode=0"
 } else {
     Write-Log "gpupdate devolvio un codigo de advertencia o error." "WARN"
@@ -124,7 +120,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-BlueDeployStep -StepNumber "120" `
                          -StepName "GROUP_POLICY_UPDATE" `
                          -StepStatus "WARNING" `
-                         -Message "Group policies update command completed with warnings" `
+                         -Message "La actualización de directivas de grupo finalizó con advertencias" `
                          -ErrorCode "GPUPDATE_WARNING" `
                          -RawOutput "Output=$gpResult"
 }
@@ -136,33 +132,62 @@ if ($LASTEXITCODE -eq 0) {
 Write-Log "Comprobando e incluyendo el equipo en el grupo de AD: $GroupName" "INFO"
 
 try {
-    # Importar el módulo de Active Directory de forma explícita por seguridad
-    Import-Module ActiveDirectory -ErrorAction Stop
-
-    # Obtener el SamAccountName de la máquina actual
+    Add-Type -AssemblyName System.DirectoryServices -ErrorAction Stop
     $ComputerSAM = "$env:COMPUTERNAME$"
 
-    Write-Log "Agregando miembro '$ComputerSAM' al grupo '$GroupName'..." "INFO"
-    Add-ADGroupMember -Identity $GroupName -Members $ComputerSAM -Server "bluedeploy.domain.es" -Credential $Credential -ErrorAction Stop
-    Write-Log "Equipo agregado al grupo de AD con exito." "OK"
+    $LdapHost = if ($Domain) { $Domain } else { "localhost" }
+    $RootDse = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$LdapHost/RootDSE", $AdminUser, $AdminPass)
+    $NamingContext = [string]$RootDse.Properties["defaultNamingContext"].Value
+    if ([string]::IsNullOrWhiteSpace($NamingContext)) {
+        throw "No se pudo obtener defaultNamingContext del controlador de dominio."
+    }
+
+    $SearchRoot = New-Object System.DirectoryServices.DirectoryEntry("LDAP://$LdapHost/$NamingContext", $AdminUser, $AdminPass)
+    $Searcher = New-Object System.DirectoryServices.DirectorySearcher($SearchRoot)
+    $Searcher.SearchScope = [System.DirectoryServices.SearchScope]::Subtree
+    $Searcher.PropertiesToLoad.Add("distinguishedName") | Out-Null
+    $Searcher.PropertiesToLoad.Add("member") | Out-Null
+
+    $Searcher.Filter = "(&(objectCategory=group)(sAMAccountName=$GroupName))"
+    $GroupResult = $Searcher.FindOne()
+    if (-not $GroupResult) {
+        throw "No se encontró el grupo '$GroupName' en Active Directory."
+    }
+
+    $Searcher.Filter = "(&(objectCategory=computer)(sAMAccountName=$ComputerSAM))"
+    $ComputerResult = $Searcher.FindOne()
+    if (-not $ComputerResult) {
+        throw "No se encontró el objeto de equipo '$ComputerSAM' en Active Directory."
+    }
+
+    $ComputerDn = [string]$ComputerResult.Properties["distinguishedname"][0]
+    $GroupEntry = $GroupResult.GetDirectoryEntry()
+    $Members = $GroupEntry.Properties["member"]
+    if ($Members.Contains($ComputerDn)) {
+        Write-Log "El equipo '$ComputerSAM' ya pertenece al grupo '$GroupName'." "OK"
+    } else {
+        Write-Log "Agregando miembro '$ComputerSAM' al grupo '$GroupName'..." "INFO"
+        $Members.Add($ComputerDn) | Out-Null
+        $GroupEntry.CommitChanges()
+        Write-Log "Equipo agregado al grupo de AD con exito." "OK"
+    }
 
     # [EVIDENCIA 130 - ÉXITO]
     Write-BlueDeployStep -StepNumber "130" `
                          -StepName "AD_GROUP_MEMBERSHIP_MANAGEMENT" `
                          -StepStatus "SUCCESS" `
-                         -Message "The computer object was successfully added to the designated WSUS AD Target Group" `
-                         -RawOutput "Group=$GroupName; ComputerSAM=$ComputerSAM"
+                         -Message "El objeto del equipo se añadió correctamente al grupo de destino WSUS de AD" `
+                         -RawOutput "Group=$GroupName; ComputerSAM=$ComputerSAM; ComputerDN=$ComputerDn"
 }
 catch {
     $ErrorMsg = $_.Exception.Message
     Write-Log "Error gestionando membresia en el grupo AD: $ErrorMsg" "ERROR"
-    Write-Log "Tipo de excepcion: $($_.Exception.GetType().Name)" "ERROR"
 
     # [EVIDENCIA 130 - FALLO]
     Write-BlueDeployStep -StepNumber "130" `
                          -StepName "AD_GROUP_MEMBERSHIP_MANAGEMENT" `
                          -StepStatus "FAILED" `
-                         -Message "Critical failure during active directory group attachment operation" `
+                         -Message "Error durante la operación de incorporación del equipo al grupo de AD" `
                          -ErrorCode "AD_GROUP_ADD_FAILURE" `
                          -RawOutput "Group=$GroupName; Error=$ErrorMsg"
 
@@ -188,34 +213,57 @@ catch {
 }
 
 Write-Log "Registrando proxima tarea programada: '$NextTask'..." "INFO"
-$taskResult = schtasks /create `
-    /tn  $NextTask `
-    /tr  "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File `"$NextScript`"" `
-    /sc  onlogon `
-    /ru  "System" `
-    /f   2>&1
+$LocalAdmin = "$env:COMPUTERNAME\Administrador"
+$TaskRegistered = $false
 
-if ($LASTEXITCODE -eq 0) {
+try {
+    $TaskAction = New-ScheduledTaskAction `
+        -Execute "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" `
+        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$NextScript`""
+    $TaskTrigger = New-ScheduledTaskTrigger -AtLogOn -User $LocalAdmin
+    $TaskPrincipal = New-ScheduledTaskPrincipal `
+        -UserId $LocalAdmin `
+        -LogonType Interactive `
+        -RunLevel Highest
+
+    Register-ScheduledTask `
+        -TaskName $NextTask `
+        -Action $TaskAction `
+        -Trigger $TaskTrigger `
+        -Principal $TaskPrincipal `
+        -Force `
+        -ErrorAction Stop | Out-Null
+
+    $TaskRegistered = $true
+} catch {
+    $taskResult = $_.Exception.Message
+}
+
+if ($TaskRegistered) {
     Write-Log "Tarea '$NextTask' registrada correctamente." "OK"
 
     # [EVIDENCIA 135] Registro del agendamiento de la fase final de software
     Write-BlueDeployStep -StepNumber "135" `
                          -StepName "INSTALL_SOFTWARE_TASK_REGISTERED" `
                          -StepStatus "SUCCESS" `
-                         -Message "The next orchestration step task for software deployment was registered successfully" `
-                         -RawOutput "TaskName=$NextTask; RunAs=System"
+                         -Message "La tarea del siguiente paso de orquestación para la implementación de software se registró correctamente" `
+                         -RawOutput "TaskName=$NextTask; RunAs=$LocalAdmin; LogonType=Interactive; RunLevel=Highest"
 } else {
-    Write-Log "Fallo al registrar la tarea '$NextTask'. Salida de schtasks: $taskResult" "ERROR"
+    Write-Log "Fallo al registrar la tarea '$NextTask'. Salida: $taskResult" "ERROR"
 
     # [EVIDENCIA 135 - FALLO INTERNO]
     Write-BlueDeployStep -StepNumber "135" `
                          -StepName "INSTALL_SOFTWARE_TASK_REGISTERED" `
                          -StepStatus "FAILED" `
-                         -Message "The OS failed to write the next scheduled task trigger inside the task scheduler structure" `
+                         -Message "El sistema no pudo registrar el desencadenador de la siguiente tarea programada" `
                          -ErrorCode "SCHTASKS_REGISTRATION_FAILURE" `
                          -RawOutput "TaskName=$NextTask; Output=$taskResult"
 }
 
 Write-Host ""
-Write-Log "Script de políticas y membresía de grupo completado con éxito." "OK"
+Write-Log "Script de politicas y membresia de grupo completado." "OK"
 Write-Host ""
+
+Write-Host "Reiniciando en 5 segundos... (Ctrl+C para cancelar)"
+Start-Sleep 5
+Restart-Computer -Force

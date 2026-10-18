@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
+    "createdAt":  "2026-10-02T11:22:47",
+    "sourceScript":  "InstallDrivers.ps1",
+    "payload":  {
+                    "rawOutput":  "Removed=0; Preserved=1",
+                    "message":  "Default printers cleanup completed",
+                    "errorCode":  null,
+                    "stepName":  "PRINTER_CLEANUP",
+                    "stepStatus":  "SUCCESS"
+                }
+}
