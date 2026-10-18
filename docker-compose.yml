@@ -24,9 +24,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-bluedeploy}
+      DB_USER: ${DB_USER:-bluedeploy}
+      DB_PASSWORD: ${DB_PASSWORD:-bluedeploy}
+      BLUEDEPLOY_API_KEY: ${BLUEDEPLOY_API_KEY:-bluedeploy-secret-key-change-in-prod}
 
 volumes:
   db_data:
