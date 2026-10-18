@@ -38,8 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.password=",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
         "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.show-sql=false"
+        "spring.jpa.show-sql=false",
+        "bluedeploy.api-key=test-api-key-12345"
 })
+@org.springframework.test.context.ActiveProfiles("test")
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class MockDataPopulationTest {
@@ -234,6 +236,7 @@ public class MockDataPopulationTest {
 
     private org.springframework.test.web.servlet.ResultActions performPost(String url, Map<String, Object> body) throws Exception {
         return mockMvc.perform(post(url)
+                .header("X-BlueDeploy-Api-Key", "test-api-key-12345")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)));
     }

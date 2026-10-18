@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T11:22:46",
+    "sourceScript":  "InstallDrivers.ps1",
+    "payload":  {
+                    "rawOutput":  "Removed=2; NotFound=2",
+                    "message":  "Bloatware removal process completed",
+                    "errorCode":  null,
+                    "stepName":  "BLOATWARE_REMOVAL",
+                    "stepStatus":  "SUCCESS"
+                }
+}

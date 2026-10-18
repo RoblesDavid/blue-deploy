@@ -5,8 +5,12 @@ import com.roblesdavid.blue_deploy.dto.UpdateProfileRequestDTO;
 import com.roblesdavid.blue_deploy.dto.UserResponseDTO;
 import com.roblesdavid.blue_deploy.mapper.UserMapper;
 import com.roblesdavid.blue_deploy.model.AppUser;
+import com.roblesdavid.blue_deploy.model.AuditAction;
 import com.roblesdavid.blue_deploy.model.UserRole;
 import com.roblesdavid.blue_deploy.repository.AppUserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +23,17 @@ import java.util.List;
 public class UserService {
 
     private final AppUserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuditLogService auditLogService;
 
-    public UserService(AppUserRepository userRepository) {
+    public UserService(
+            AppUserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuditLogService auditLogService
+    ) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.auditLogService = auditLogService;
     }
 
     /**
@@ -62,7 +74,16 @@ public class UserService {
         AppUser user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con id: " + userId));
 
-        return applyProfileUpdate(user, dto);
+        UserResponseDTO result = applyProfileUpdate(user, dto);
+        auditLogService.recordAudit(
+                AuditAction.PROFILE_UPDATED,
+                getCurrentUsername(),
+                String.valueOf(user.getId()),
+                "USER",
+                "Actualización de perfil de usuario " + user.getUsername(),
+                null
+        );
+        return result;
     }
 
     /**
@@ -77,7 +98,16 @@ public class UserService {
         AppUser user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con username: " + username));
 
-        return applyProfileUpdate(user, dto);
+        UserResponseDTO result = applyProfileUpdate(user, dto);
+        auditLogService.recordAudit(
+                AuditAction.PROFILE_UPDATED,
+                getCurrentUsername(),
+                String.valueOf(user.getId()),
+                "USER",
+                "Actualización de perfil de usuario " + user.getUsername(),
+                null
+        );
+        return result;
     }
 
     /**
@@ -111,7 +141,7 @@ public class UserService {
 
         AppUser user = new AppUser();
         user.setUsername(dto.getUsername().trim());
-        user.setPassword(dto.getPassword());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
         user.setName(dto.getName().trim());
         user.setEmail(dto.getEmail().trim());
         user.setRole(UserRole.TECHNICIAN);
@@ -125,6 +155,16 @@ public class UserService {
         }
 
         AppUser saved = userRepository.save(user);
+
+        auditLogService.recordAudit(
+                AuditAction.TECHNICIAN_CREATED,
+                getCurrentUsername(),
+                String.valueOf(saved.getId()),
+                "USER",
+                "Alta de técnico: @" + saved.getUsername() + " (" + saved.getName() + ")",
+                null
+        );
+
         return UserMapper.toDTO(saved);
     }
 
@@ -144,7 +184,18 @@ public class UserService {
             throw new IllegalArgumentException("El usuario especificado no es un técnico");
         }
 
-        return applyProfileUpdate(user, dto);
+        UserResponseDTO result = applyProfileUpdate(user, dto);
+
+        auditLogService.recordAudit(
+                AuditAction.PROFILE_UPDATED,
+                getCurrentUsername(),
+                String.valueOf(user.getId()),
+                "USER",
+                "Modificación administrativa del técnico @" + user.getUsername(),
+                null
+        );
+
+        return result;
     }
 
     /**
@@ -160,6 +211,16 @@ public class UserService {
 
         user.setActive(false);
         AppUser saved = userRepository.save(user);
+
+        auditLogService.recordAudit(
+                AuditAction.PROFILE_UPDATED,
+                getCurrentUsername(),
+                String.valueOf(saved.getId()),
+                "USER",
+                "Desactivación lógica del técnico @" + saved.getUsername(),
+                null
+        );
+
         return UserMapper.toDTO(saved);
     }
 
@@ -183,7 +244,7 @@ public class UserService {
         }
 
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            user.setPassword(dto.getPassword());
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
         AppUser saved = userRepository.save(user);
@@ -199,5 +260,10 @@ public class UserService {
             return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
         }
         return (parts[0].substring(0, 1) + parts[parts.length - 1].substring(0, 1)).toUpperCase();
+    }
+
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated()) ? auth.getName() : "system";
     }
 }

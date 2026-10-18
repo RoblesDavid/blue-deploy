@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T10:50:20",
+    "sourceScript":  "Start-OSDCloud_Combined.ps1",
+    "payload":  {
+                    "rawOutput":  "OSImageIndex=1; TargetDrive=C:",
+                    "message":  "Imagen de Windows 11 aplicada exitosamente usando motor OSDCloud",
+                    "errorCode":  "",
+                    "stepName":  "WINDOWS_INSTALLATION",
+                    "stepStatus":  "SUCCESS"
+                }
+}

@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T11:23:57",
+    "sourceScript":  "SetupRadius.ps1",
+    "payload":  {
+                    "rawOutput":  "TaskName=JoinDomain; Path=C:\\OSDCloud\\Scripts\\SetupComplete\\JoinDomain.ps1; RunAs=System",
+                    "message":  "JoinDomain orchestration task was scheduled successfully",
+                    "errorCode":  null,
+                    "stepName":  "JOIN_DOMAIN_TASK_REGISTERED",
+                    "stepStatus":  "SUCCESS"
+                }
+}

@@ -101,9 +101,35 @@ class SecurityCheckApiIntegrationTest extends BaseApiIntegrationTest {
                 """;
 
         mockMvc.perform(post("/api/deployments/{deploymentId}/checks", deploymentId)
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void registerCheck_withAliasFields_shouldSucceed() throws Exception {
+        String deploymentId = "DEPLOY-PC305B-20260516";
+        createDeployment(deploymentId).andExpect(status().isOk());
+
+        String aliasPayload = """
+                {
+                  "checkType": "CROWDSTRIKE_VALIDATED",
+                  "status": "PASSED",
+                  "severity": "CRITICAL",
+                  "expectedValue": "Running",
+                  "actualValue": "Running",
+                  "message": "Sensor Falcon en ejecución y sincronizado"
+                }
+                """;
+
+        mockMvc.perform(post("/api/deployments/{deploymentId}/checks", deploymentId)
+                        .header(API_KEY_HEADER, TEST_API_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(aliasPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.checkName").value("CROWDSTRIKE_VALIDATED"))
+                .andExpect(jsonPath("$.checkStatus").value("PASSED"));
     }
 
     @Test
@@ -119,6 +145,45 @@ class SecurityCheckApiIntegrationTest extends BaseApiIntegrationTest {
         mockMvc.perform(get("/api/deployments/{deploymentId}/checks", deploymentId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].checkName", containsString("DROP TABLE")));
+    }
+
+    @Test
+    void resolveCheck_shouldUpdateCheckToPassedAndRecalculateCompliance() throws Exception {
+        String deploymentId = "DEPLOY-PC307-20260516";
+        createDeployment(deploymentId).andExpect(status().isOk());
+
+        // First register a failed check
+        postCheck(deploymentId, "CROWDSTRIKE_VALIDATED", "FAILED", "CRITICAL")
+                .andExpect(status().isOk());
+
+        // Get the check ID
+        String checksJson = mockMvc.perform(get("/api/deployments/{deploymentId}/checks", deploymentId))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        // Extract check ID using JsonPath
+        Integer checkId = com.jayway.jsonpath.JsonPath.read(checksJson, "$[0].id");
+
+        // Resolve the check as technician/admin
+        String resolvePayload = """
+                {
+                  "message": "Sensor Falcon instalado y validado manualmente"
+                }
+                """;
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/deployments/{deploymentId}/checks/{checkId}/resolve", deploymentId, checkId)
+                        .header("Authorization", "Bearer " + obtainAdminToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(resolvePayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.checkStatus").value("PASSED"))
+                .andExpect(jsonPath("$.message").value("Sensor Falcon instalado y validado manualmente"));
+
+        // Verify deployment is now COMPLIANT
+        mockMvc.perform(get("/api/deployments/{deploymentId}", deploymentId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.complianceStatus").value("COMPLIANT"))
+                .andExpect(jsonPath("$.deploymentStatus").value("COMPLETED"));
     }
 
     private org.springframework.test.web.servlet.ResultActions postCheck(
@@ -139,6 +204,7 @@ class SecurityCheckApiIntegrationTest extends BaseApiIntegrationTest {
                 """.formatted(checkName, checkStatus, severity);
 
         return mockMvc.perform(post("/api/deployments/{deploymentId}/checks", deploymentId)
+                .header(API_KEY_HEADER, TEST_API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload));
     }
@@ -157,6 +223,7 @@ class SecurityCheckApiIntegrationTest extends BaseApiIntegrationTest {
                 """.formatted(stepName, stepStatus, stepName, stepStatus);
 
         return mockMvc.perform(post("/api/deployments/{deploymentId}/steps", deploymentId)
+                .header(API_KEY_HEADER, TEST_API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload));
     }

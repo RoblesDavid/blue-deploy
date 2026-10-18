@@ -2,6 +2,7 @@ package com.roblesdavid.blue_deploy.controller;
 
 import com.roblesdavid.blue_deploy.dto.DashboardSummaryDTO;
 import com.roblesdavid.blue_deploy.service.DashboardService;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,11 +22,13 @@ public class DashboardController {
 
     /**
      * Devuelve el resumen agregado de estados de despliegue y checks críticos.
+     * Retorna métricas globales para rol ADMIN y acotadas para rol TECHNICIAN.
      *
-     * @return métricas globales para el dashboard
+     * @param authentication contexto de autenticación
+     * @return métricas para el dashboard
      */
     @GetMapping("/summary")
-    public DashboardSummaryDTO getSummary() {
-        return dashboardService.getSummary();
+    public DashboardSummaryDTO getSummary(Authentication authentication) {
+        return dashboardService.getSummaryForUser(authentication);
     }
 }

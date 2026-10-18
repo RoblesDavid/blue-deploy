@@ -6,6 +6,8 @@ import com.roblesdavid.blue_deploy.dto.UserResponseDTO;
 import com.roblesdavid.blue_deploy.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,45 +26,57 @@ public class UserController {
     }
 
     /**
-     * Obtiene los datos del perfil del usuario actual.
-     * Permite especificar el usuario mediante cabeceras opcionales (X-User-Id o X-Username)
-     * mientras no esté activo el sistema de tokens JWT.
+     * Obtiene los datos del perfil del usuario actual (autenticado por JWT o mediante cabeceras opcionales).
      *
      * @param headerUserId identificador opcional en cabecera
      * @param headerUsername nombre de usuario opcional en cabecera
+     * @param authentication objeto de autenticación Spring Security
      * @return perfil del usuario
      */
     @GetMapping("/me")
     public UserResponseDTO getCurrentUser(
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
-            @RequestHeader(value = "X-Username", required = false) String headerUsername
+            @RequestHeader(value = "X-Username", required = false) String headerUsername,
+            Authentication authentication
     ) {
         if (headerUserId != null) {
             return userService.getUserProfileById(headerUserId);
         }
-        String username = (headerUsername != null && !headerUsername.isBlank()) ? headerUsername : "admin";
-        return userService.getUserProfileByUsername(username);
+        if (headerUsername != null && !headerUsername.isBlank()) {
+            return userService.getUserProfileByUsername(headerUsername);
+        }
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            return userService.getUserProfileByUsername(authentication.getName());
+        }
+        return userService.getUserProfileByUsername("admin");
     }
 
     /**
-     * Actualiza el perfil del usuario actual.
+     * Actualiza el perfil del usuario actual (autenticado por JWT o mediante cabeceras opcionales).
      *
      * @param dto datos actualizados del perfil
      * @param headerUserId identificador opcional en cabecera
      * @param headerUsername nombre de usuario opcional en cabecera
+     * @param authentication objeto de autenticación Spring Security
      * @return perfil actualizado
      */
     @PutMapping("/me")
     public UserResponseDTO updateCurrentUser(
             @Valid @RequestBody UpdateProfileRequestDTO dto,
             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
-            @RequestHeader(value = "X-Username", required = false) String headerUsername
+            @RequestHeader(value = "X-Username", required = false) String headerUsername,
+            Authentication authentication
     ) {
         if (headerUserId != null) {
             return userService.updateUserProfile(headerUserId, dto);
         }
-        String username = (headerUsername != null && !headerUsername.isBlank()) ? headerUsername : "admin";
-        return userService.updateUserProfileByUsername(username, dto);
+        if (headerUsername != null && !headerUsername.isBlank()) {
+            return userService.updateUserProfileByUsername(headerUsername, dto);
+        }
+        if (authentication != null && authentication.isAuthenticated() && !(authentication instanceof AnonymousAuthenticationToken)) {
+            return userService.updateUserProfileByUsername(authentication.getName(), dto);
+        }
+        return userService.updateUserProfileByUsername("admin", dto);
     }
 
     /**

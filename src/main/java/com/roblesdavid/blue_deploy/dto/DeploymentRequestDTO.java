@@ -17,6 +17,8 @@ public class DeploymentRequestDTO {
 
     private String domainName;
 
+    private Long technicianId;
+
     public String getDeploymentId() {
         return deploymentId;
     }
@@ -47,5 +49,13 @@ public class DeploymentRequestDTO {
 
     public void setDomainName(String domainName) {
         this.domainName = domainName;
+    }
+
+    public Long getTechnicianId() {
+        return technicianId;
+    }
+
+    public void setTechnicianId(Long technicianId) {
+        this.technicianId = technicianId;
     }
 }

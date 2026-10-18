@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T10:54:40",
+    "sourceScript":  "SetupComplete.cmd",
+    "payload":  {
+                    "stepName":  "SETUPCOMPLETE_EXECUTED",
+                    "stepStatus":  "SUCCESS",
+                    "message":  "SetupComplete executed successfully. Autologon and InstallDrivers task were configured.",
+                    "errorCode":  null,
+                    "rawOutput":  "SetupComplete.cmd executed; InstallDrivers task registered; AutoLogon configured"
+                }
+}

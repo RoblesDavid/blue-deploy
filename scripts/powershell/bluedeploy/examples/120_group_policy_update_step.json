@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T11:26:50",
+    "sourceScript":  "AddComputerToADGroup_WSUS.ps1",
+    "payload":  {
+                    "rawOutput":  "ExitCode=0",
+                    "message":  "Group policies updated successfully on the device",
+                    "errorCode":  null,
+                    "stepName":  "GROUP_POLICY_UPDATE",
+                    "stepStatus":  "SUCCESS"
+                }
+}

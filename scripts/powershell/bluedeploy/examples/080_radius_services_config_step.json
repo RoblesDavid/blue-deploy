@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "createdAt":  "2026-10-02T11:23:56",
+    "sourceScript":  "SetupRadius.ps1",
+    "payload":  {
+                    "rawOutput":  "Dot3svc=Running; EapHost=Running",
+                    "message":  "802.1X and EAP Host services started successfully",
+                    "errorCode":  null,
+                    "stepName":  "RADIUS_SERVICES_CONFIG",
+                    "stepStatus":  "SUCCESS"
+                }
+}

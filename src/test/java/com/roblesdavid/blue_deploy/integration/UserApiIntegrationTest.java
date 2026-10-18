@@ -5,11 +5,13 @@ import com.roblesdavid.blue_deploy.model.UserRole;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@WithMockUser(username = "admin", roles = {"ADMIN"})
 class UserApiIntegrationTest extends BaseApiIntegrationTest {
 
     @Test
