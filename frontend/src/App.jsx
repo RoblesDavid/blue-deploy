@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import ProtectedRoute from './auth/ProtectedRoute'
 import Layout from './components/layout/Layout'
+import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AllDeployments from './pages/admin/AllDeployments'
@@ -21,7 +22,10 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/contact" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<RoleRedirect />} />
 
           {/* Admin */}
           <Route
@@ -51,7 +55,6 @@ export default function App() {
             <Route path="profile" element={<MyProfile />} />
           </Route>
 
-          <Route path="/" element={<RoleRedirect />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

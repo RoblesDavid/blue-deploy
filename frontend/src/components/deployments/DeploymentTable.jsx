@@ -11,7 +11,7 @@ function fmt(iso) {
   })
 }
 
-export default function DeploymentTable({ deployments, showTechnician = false }) {
+export default function DeploymentTable({ deployments, showTechnician = false, onRefresh }) {
   const [selected, setSelected] = useState(null)
 
   if (!deployments.length) {
@@ -47,7 +47,15 @@ export default function DeploymentTable({ deployments, showTechnician = false })
                 </td>
                 <td className="py-3 px-4 text-slate-300 whitespace-nowrap">{dep.deviceModel}</td>
                 {showTechnician && (
-                  <td className="py-3 px-4 text-slate-300 whitespace-nowrap">{dep.technicianName}</td>
+                  <td className="py-3 px-4 text-slate-300 whitespace-nowrap">
+                    {dep.technicianName ? (
+                      <span>{dep.technicianName}</span>
+                    ) : (
+                      <span className="text-amber-400 text-xs font-medium bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                        Sin asignar
+                      </span>
+                    )}
+                  </td>
                 )}
                 <td className="py-3 px-4">
                   <Badge status={dep.deploymentStatus} />
@@ -72,7 +80,13 @@ export default function DeploymentTable({ deployments, showTechnician = false })
       </div>
 
       {selected && (
-        <DeploymentDetail deployment={selected} onClose={() => setSelected(null)} />
+        <DeploymentDetail
+          deployment={selected}
+          onClose={() => setSelected(null)}
+          onUpdated={() => {
+            if (onRefresh) onRefresh()
+          }}
+        />
       )}
     </>
   )
