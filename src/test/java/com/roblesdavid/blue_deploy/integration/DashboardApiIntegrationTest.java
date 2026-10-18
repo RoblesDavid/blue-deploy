@@ -82,6 +82,7 @@ class DashboardApiIntegrationTest extends BaseApiIntegrationTest {
                 """.formatted(stepName, stepStatus);
 
         return mockMvc.perform(post("/api/deployments/{deploymentId}/steps", deploymentId)
+                .header(API_KEY_HEADER, TEST_API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload));
     }
@@ -102,6 +103,7 @@ class DashboardApiIntegrationTest extends BaseApiIntegrationTest {
                 """.formatted(checkName, checkStatus, severity);
 
         return mockMvc.perform(post("/api/deployments/{deploymentId}/checks", deploymentId)
+                .header(API_KEY_HEADER, TEST_API_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload));
     }

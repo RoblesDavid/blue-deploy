@@ -25,7 +25,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.datasource.password=",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect", // <-- Fuerza la resolución del dialecto
         "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.jpa.show-sql=true"
+        "spring.jpa.show-sql=true",
+        "bluedeploy.api-key=test-api-key-12345"
 })
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -38,6 +39,8 @@ public class DeploymentFlowIntegrationTest {
 
     // ID Unificado idéntico para toda la simulación del ciclo
     private static final String DEPLOYMENT_ID = "DEPLOY-AGSNEG-QEMU-TEST-20260524";
+    private static final String API_KEY_HEADER = "X-BlueDeploy-Api-Key";
+    private static final String TEST_API_KEY = "test-api-key-12345";
 
     @Test
     @Order(1)
@@ -50,6 +53,7 @@ public class DeploymentFlowIntegrationTest {
         payload.put("message", "Inicio del proceso de despliegue automatizado OSDCloud en WinPE");
 
         mockMvc.perform(post("/api/deployments")
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk()) // o isCreated() según tu controlador
@@ -68,6 +72,7 @@ public class DeploymentFlowIntegrationTest {
         payload.put("rawOutput", "AutoLogon configured");
 
         mockMvc.perform(post("/api/deployments/" + DEPLOYMENT_ID + "/steps")
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk());
@@ -85,6 +90,7 @@ public class DeploymentFlowIntegrationTest {
         payload.put("rawOutput", "Domain: dmsas.sda.sas.junta-andalucia.es");
 
         mockMvc.perform(post("/api/deployments/" + DEPLOYMENT_ID + "/steps")
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk());
@@ -104,6 +110,7 @@ public class DeploymentFlowIntegrationTest {
 
         // Apunta al endpoint específico de validaciones "/checks"
         mockMvc.perform(post("/api/deployments/" + DEPLOYMENT_ID + "/checks")
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isOk());
@@ -120,6 +127,7 @@ public class DeploymentFlowIntegrationTest {
         payload.put("stepStatus", "SUCCESS");
 
         mockMvc.perform(post("/api/deployments/" + idInexistente + "/steps")
+                        .header(API_KEY_HEADER, TEST_API_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isNotFound()); // Verifica que el backend lance el 404 controlado

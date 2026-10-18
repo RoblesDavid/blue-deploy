@@ -1,6 +1,7 @@
 package com.roblesdavid.blue_deploy.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.roblesdavid.blue_deploy.model.StepStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -13,9 +14,11 @@ import java.time.LocalDateTime;
 public class DeploymentStepRequestDTO {
 
     @NotBlank(message = "stepName no puede estar vacío")
+    @JsonAlias({"name", "step", "step_name"})
     private String stepName;
 
     @NotNull(message = "stepStatus no puede ser null")
+    @JsonAlias({"status", "state", "step_status"})
     private StepStatus stepStatus;
 
     private String message;

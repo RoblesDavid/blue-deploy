@@ -16,16 +16,16 @@ echo Habilitando ejecucion de scripts PowerShell...
 reg add "HKLM\SOFTWARE\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell" /v "ExecutionPolicy" /t REG_SZ /d "RemoteSigned" /f >nul
 echo [OK] ExecutionPolicy establecida en RemoteSigned en el Registro.
 
-:: --- Activar cuenta OSDAdmin local y establecer contrasena  ---
-echo Activando cuenta OSDAdmin...
-net user OSDAdmin /active:yes >nul
+:: --- Activar cuenta Administrador local y establecer contrasena (Ofuscada) ---
+echo Activando cuenta Administrador...
+net user Administrador /active:yes >nul
 
-:: Establecemos la contraseña decodificándola al vuelo
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMwo=')); $u=[adsi]'WinNT://./OSDAdmin,user'; $u.SetPassword($p); $u.SetInfo()"
+:: Establecemos la contrasena decodificandola al vuelo desde Base64 (test123 para laboratorio)
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMw==')); $u=[adsi]'WinNT://./Administrador,user'; $u.SetPassword($p); $u.SetInfo()"
 
-:: Desactivar caducidad de contrasena
-powershell.exe -NoProfile -Command "Set-LocalUser -Name 'OSDAdmin' -PasswordNeverExpires $true"
-echo [OK] Cuenta OSDAdmin activada de forma segura.
+:: Desactivar caducidad de contrasena usando PowerShell
+powershell.exe -NoProfile -Command "Set-LocalUser -Name 'Administrador' -PasswordNeverExpires $true"
+echo [OK] Cuenta Administrador activada de forma segura.
 
 :: --- Aplicar nombre del equipo ---
 set "NAMEFILE=C:\OSDCloud\ComputerName.txt"
@@ -59,19 +59,36 @@ sc config wuauserv start= disabled >nul
 net stop wuauserv >nul 2>&1
 echo [OK] Windows Update deshabilitado.
 
+:: --- Habilitar Escritorio remoto ---
+echo Habilitando Escritorio remoto...
+set "RDP_STATUS=SUCCESS"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; try { Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name 'fDenyTSConnections' -Type DWord -Value 0 -Force; Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name 'UserAuthentication' -Type DWord -Value 1 -Force; Set-Service -Name TermService -StartupType Automatic; Start-Service -Name TermService; Enable-NetFirewallRule -Name 'RemoteDesktop-UserMode-In-TCP','RemoteDesktop-UserMode-In-UDP'; $rules=Get-NetFirewallRule -Name 'RemoteDesktop-UserMode-In-TCP','RemoteDesktop-UserMode-In-UDP'; if ((Get-ItemPropertyValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections) -ne 0) { throw 'RDP connections remain denied' }; if ((Get-ItemPropertyValue -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication) -ne 1) { throw 'NLA is not enabled' }; if ((Get-Service TermService).Status -ne 'Running') { throw 'TermService is not running' }; if (@($rules | Where-Object { $_.Enabled -ne 'True' }).Count -gt 0) { throw 'One or more Remote Desktop firewall rules are disabled' }; exit 0 } catch { Write-Error $_; exit 1 }"
+if errorlevel 1 (
+    set "RDP_STATUS=FAILED"
+    echo [ERROR] No se pudo habilitar completamente Escritorio remoto.
+) else (
+    echo [OK] Escritorio remoto habilitado con NLA y reglas de firewall.
+)
+
 :: --- Registrar InstallDrivers ---
 echo Registrando tarea InstallDrivers...
-schtasks /create /tn "InstallDrivers" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File C:\OSDCloud\Scripts\SetupComplete\InstallDrivers.ps1" /sc onlogon /ru "SYSTEM" /f >nul
-echo [OK] Tarea InstallDrivers registrada bajo la cuenta SYSTEM.
+set "DRIVERS_TASK_STATUS=SUCCESS"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$admin = (Get-CimInstance Win32_ComputerSystem).Name + '\Administrador'; $action = New-ScheduledTaskAction -Execute (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -Argument '-NoProfile -ExecutionPolicy Bypass -File C:\OSDCloud\Scripts\SetupComplete\InstallDrivers.ps1'; $trigger = New-ScheduledTaskTrigger -AtLogOn -User $admin; $principal = New-ScheduledTaskPrincipal -UserId $admin -LogonType Interactive -RunLevel Highest; Register-ScheduledTask -TaskName 'InstallDrivers' -Action $action -Trigger $trigger -Principal $principal -Force -ErrorAction Stop | Out-Null"
+if errorlevel 1 (
+    set "DRIVERS_TASK_STATUS=FAILED"
+    echo [ERROR] No se pudo registrar InstallDrivers para la sesion interactiva.
+) else (
+    echo [OK] Tarea InstallDrivers registrada para mostrar el progreso al Administrador local.
+)
 
 :: --- Configurar AutoLogon seguro para el siguiente reinicio ---
 echo Configurando AutoLogon...
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d "1" /f >nul
-reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultUserName /t REG_SZ /d "OSDAdmin" /f >nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v DefaultUserName /t REG_SZ /d "Administrador" /f >nul
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoLogonCount /t REG_DWORD /d 5 /f >nul
 
-:: Inyectamos la contraseña en el registro decodificándola
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMwo=')); New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'DefaultPassword' -PropertyType String -Value $p -Force | Out-Null"
+:: Inyectamos la contrasena de laboratorio en el registro decodificandola directamente con PowerShell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=[System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('dGVzdDEyMw==')); New-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -Name 'DefaultPassword' -PropertyType String -Value $p -Force | Out-Null"
 echo [OK] AutoLogon configurado.
 
 REM === BlueDeploy JSON Queue - SetupComplete ===
@@ -79,13 +96,13 @@ set BLUEDEPLOY_QUEUE=C:\tmp\BlueDeploy\Queue
 set BLUEDEPLOY_STATE=C:\OSDCloud
 set BLUEDEPLOY_TEMP=C:\tmp\BlueDeploy
 set BLUEDEPLOY_EVENT_SCRIPT=C:\tmp\BlueDeploy\Write-SetupCompleteEvent.ps1
-set BLUEDEPLOY_DEPLOYMENT_ID_FILE=C:\OSDCloud\BlueDeployDeploymentId.txt
+set BLUEDEPLOY_DEPLOYMENT_ID_FILE=C:\OSDCloud\DeploymentId.txt
 
 if not exist "%BLUEDEPLOY_QUEUE%" mkdir "%BLUEDEPLOY_QUEUE%"
 if not exist "%BLUEDEPLOY_TEMP%" mkdir "%BLUEDEPLOY_TEMP%"
 
 echo Generando JSON de evento BlueDeploy...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$deploymentIdFile = '%BLUEDEPLOY_DEPLOYMENT_ID_FILE%'; $queuePath = '%BLUEDEPLOY_QUEUE%'; $eventPath = Join-Path $queuePath '030_setupcomplete_step.json'; if (Test-Path $deploymentIdFile) { $deploymentId = (Get-Content $deploymentIdFile -Raw).Trim() } else { $deploymentId = 'DEPLOY-' + $env:COMPUTERNAME + '-' + (Get-Date -Format 'yyyyMMdd-HHmmss') }; $event = [ordered]@{ eventType = 'DEPLOYMENT_STEP'; deploymentId = $deploymentId; apiPath = '/api/deployments/' + $deploymentId + '/steps'; createdAt = (Get-Date).ToString('s'); sourceScript = 'SetupComplete.cmd'; payload = [ordered]@{ stepName = 'SETUPCOMPLETE_EXECUTED'; stepStatus = 'SUCCESS'; message = 'SetupComplete executed successfully. Autologon and InstallDrivers task were configured.'; errorCode = $null; rawOutput = 'SetupComplete.cmd executed; InstallDrivers task registered; AutoLogon configured' } }; $event | ConvertTo-Json -Depth 10 | Out-File -FilePath $eventPath -Encoding UTF8 -Force"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$deploymentIdFile = '%BLUEDEPLOY_DEPLOYMENT_ID_FILE%'; $queuePath = '%BLUEDEPLOY_QUEUE%'; $eventPath = Join-Path $queuePath '030_setupcomplete_step.json'; if (Test-Path $deploymentIdFile) { $deploymentId = (Get-Content $deploymentIdFile -Raw).Trim() } else { $deploymentId = 'DEPLOY-LAB-' + $env:COMPUTERNAME + '-' + (Get-Date -Format 'yyyyMMdd') }; $rdpStatus = '%RDP_STATUS%'; $driversTaskStatus = '%DRIVERS_TASK_STATUS%'; $success = ($rdpStatus -eq 'SUCCESS' -and $driversTaskStatus -eq 'SUCCESS'); $stepStatus = if ($success) { 'SUCCESS' } else { 'WARNING' }; $errorCode = if ($success) { $null } else { 'SETUP_CONFIGURATION_INCOMPLETE' }; $message = if ($success) { 'Remote Desktop and interactive InstallDrivers task were configured and verified.' } else { 'Remote Desktop or the interactive InstallDrivers task failed; inspect SetupComplete output.' }; $event = [ordered]@{ eventType = 'DEPLOYMENT_STEP'; deploymentId = $deploymentId; apiPath = '/api/deployments/' + $deploymentId + '/steps'; createdAt = (Get-Date).ToString('s'); sourceScript = 'SetupComplete.cmd'; payload = [ordered]@{ stepName = 'SETUPCOMPLETE_EXECUTED'; stepStatus = $stepStatus; message = $message; errorCode = $errorCode; rawOutput = 'RDP=' + $rdpStatus + '; InstallDriversTask=' + $driversTaskStatus + '; AutoLogon configured' } }; $event | ConvertTo-Json -Depth 10 | Out-File -FilePath $eventPath -Encoding UTF8 -Force"
 
 echo [OK] Proceso SetupComplete finalizado.
 

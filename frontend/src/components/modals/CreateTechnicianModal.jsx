@@ -1,24 +1,36 @@
 import { useState } from 'react'
-import { X, UserPlus, Info } from 'lucide-react'
+import { X, UserPlus, AlertCircle } from 'lucide-react'
+import usersApi from '../../api/usersApi'
 
-export default function CreateTechnicianModal({ onClose }) {
+export default function CreateTechnicianModal({ onClose, onSuccess }) {
   const [form, setForm] = useState({
     name: '',
     username: '',
     email: '',
-    department: '',
+    department: 'Blue Team - Soporte',
     password: '',
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    // Mock: no real persistence — will be implemented in práctica 2
-    alert(`Técnico "${form.name}" creado correctamente.\n(Modo demo — la persistencia real se implementará en práctica 2)`)
-    onClose()
+    setError('')
+    setLoading(true)
+
+    try {
+      await usersApi.createTechnician(form)
+      if (onSuccess) onSuccess()
+      onClose()
+    } catch (err) {
+      setError(err.message || 'Error al crear técnico')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -42,20 +54,19 @@ export default function CreateTechnicianModal({ onClose }) {
           </button>
         </div>
 
-        {/* Demo notice */}
-        <div className="mx-5 mt-4 flex items-start gap-2.5 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-          <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-          <p className="text-blue-300 text-xs leading-relaxed">
-            Modo demo — la persistencia real se implementará en la práctica 2 junto con el sistema de autenticación JWT.
-          </p>
-        </div>
+        {error && (
+          <div className="mx-5 mt-4 flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <p className="text-red-300 text-xs">{error}</p>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {[
             { name: 'name', label: 'Nombre completo', placeholder: 'Ej: María López', type: 'text' },
             { name: 'username', label: 'Usuario', placeholder: 'Ej: maria.lopez', type: 'text' },
-            { name: 'email', label: 'Email', placeholder: 'Ej: maria.lopez@corp.local', type: 'email' },
+            { name: 'email', label: 'Email', placeholder: 'Ej: maria.lopez@blue.local', type: 'email' },
             { name: 'department', label: 'Departamento', placeholder: 'Ej: Blue Team - Soporte', type: 'text' },
             { name: 'password', label: 'Contraseña inicial', placeholder: '••••••••', type: 'password' },
           ].map(({ name, label, placeholder, type }) => (
@@ -77,15 +88,18 @@ export default function CreateTechnicianModal({ onClose }) {
             <button
               type="button"
               onClick={onClose}
+              disabled={loading}
               className="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 text-sm font-medium transition-all"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-xl text-white bg-blue-600 hover:bg-blue-500 text-sm font-medium transition-all shadow-lg shadow-blue-900/30"
+              disabled={loading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-sm font-medium transition-all shadow-lg shadow-blue-900/30"
             >
-              Crear técnico
+              {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+              {loading ? 'Guardando...' : 'Crear técnico'}
             </button>
           </div>
         </form>

@@ -144,14 +144,14 @@ bash docker compose build docker compose up
 
 ### Práctica 2
 
-- [ ] API Key para scripts PowerShell.
-- [ ] Autenticación JWT para dashboard.
-- [ ] Integración IA para análisis de errores.
-- [ ] Exportación de informes PDF.
-- [ ] Integración con CrowdStrike/Altiris.
-- [ ] Sistema de reglas configurable.
-- [ ] Alertas por Teams o email.
-- [ ] Hardening del despliegue en Hetzner.
+- [x] API Key para scripts PowerShell e ingesta resiliente (`X-BlueDeploy-Api-Key`).
+- [x] Autenticación JWT con roles (ADMIN y TECHNICIAN) y protección RBAC en Spring Security.
+- [x] Diagnóstico inteligente de errores asistido por IA (`AiSummary`).
+- [x] Exportación de informes oficiales de auditoría y conformidad en PDF (`OpenPDF`).
+- [x] Registro inmutable de eventos de seguridad y auditoría (`AuditLog`).
+- [x] Landing Page introductoria con navegación, acceso y contacto de David Robles Gaona.
+- [x] Despliegue de producción contenerizado en Hetzner con Nginx y MariaDB 11.
+- [x] Suite de 95 tests de integración automatizados con Maven (100% superados).
 
 ---
 
@@ -160,12 +160,12 @@ bash docker compose build docker compose up
 La documentación técnica del proyecto se encuentra en la carpeta:
 
 ```text
- notes/
- 
- ```  
+notes/
+```
+
 Estas notas están pensadas para ser consultadas desde Obsidian y servir como base para el informe final en PDF.
 
 ---
 
-Proyecto desarrollado como parte del Máster Online en Ciberseguridad & Inteligencia Artificial por Evolve Academy.
+Proyecto desarrollado por **David Robles Gaona** (Tel: 629096538 · [LinkedIn](https://www.linkedin.com/in/david-robles-gaona)) como parte del Máster Online en Ciberseguridad & Inteligencia Artificial por Evolve Academy.
 

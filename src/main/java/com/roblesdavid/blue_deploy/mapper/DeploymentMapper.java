@@ -28,6 +28,10 @@ public class DeploymentMapper {
         dto.startedAt = deployment.getStartedAt() != null ? deployment.getStartedAt().toString() : null;
         dto.finishedAt = deployment.getFinishedAt() != null ? deployment.getFinishedAt().toString() : null;
         dto.lastSeenAt = deployment.getLastSeenAt() != null ? deployment.getLastSeenAt().toString() : null;
+        if (deployment.getTechnician() != null) {
+            dto.technicianId = deployment.getTechnician().getId();
+            dto.technicianName = deployment.getTechnician().getName();
+        }
 
         return dto;
     }

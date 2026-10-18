@@ -47,6 +47,10 @@ public class Deployment {
     @Column(name = "last_seen_at", nullable = false)
     private LocalDateTime lastSeenAt;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "technician_id")
+    private AppUser technician;
+
     public Long getId() {
         return id;
     }
@@ -129,5 +133,13 @@ public class Deployment {
 
     public void setLastSeenAt(LocalDateTime lastSeenAt) {
         this.lastSeenAt = lastSeenAt;
+    }
+
+    public AppUser getTechnician() {
+        return technician;
+    }
+
+    public void setTechnician(AppUser technician) {
+        this.technician = technician;
     }
 }

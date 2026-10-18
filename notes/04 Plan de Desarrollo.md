@@ -192,6 +192,31 @@ Rediseñar el frontend con Tailwind CSS, sistema de autenticación mock y vistas
 ### Notas de Práctica 2:
 
 - Reemplazar credenciales mock por JWT + Spring Security.
-- Persistir usuarios en base de datos.
-- Implementar lógica real de creación de técnicos.
+- Persistir usuarios en base de datos (Sprint 8 completado).
+- Implementar lógica real de creación de técnicos y gestión de perfiles (Sprint 8 completado).
 - Añadir autenticación API Key para scripts PowerShell.
+
+---
+
+## Sprint 8 - Gestión y Persistencia de Usuarios Backend (Práctica 2)
+
+Estado: COMPLETADO
+
+Objetivo:
+Implementar la persistencia de usuarios en backend con roles diferenciados (ADMIN y TECHNICIAN) y endpoints REST para la administración de técnicos y perfiles.
+
+### Tareas completadas:
+- Entidad `AppUser` y enum `UserRole` (`ADMIN`, `TECHNICIAN`).
+- Repositorio Spring Data JPA `AppUserRepository`.
+- DTOs y Mapper (`UserResponseDTO`, `CreateTechnicianRequestDTO`, `UpdateProfileRequestDTO`, `UserMapper`).
+- Servicio de negocio `UserService` con validaciones de unicidad de username/email, generación automática de iniciales, actualización de perfil y baja lógica (`active = false`).
+- Controlador REST `UserController` con endpoints `/api/users`.
+- Tests de integración exhaustivos con H2 en memoria (`UserApiIntegrationTest`).
+
+### Endpoints implementados:
+- `GET /api/users/me` — Consulta perfil usuario actual.
+- `PUT /api/users/me` — Actualización perfil usuario actual.
+- `GET /api/users/technicians` — Listado de técnicos.
+- `POST /api/users/technicians` — Alta de técnico por Administrador.
+- `PUT /api/users/technicians/{id}` — Modificación de técnico por ID.
+- `PATCH /api/users/technicians/{id}/disable` — Baja lógica de técnico.

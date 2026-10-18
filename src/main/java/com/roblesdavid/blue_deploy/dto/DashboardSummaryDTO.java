@@ -1,7 +1,8 @@
 package com.roblesdavid.blue_deploy.dto;
 
 /**
- * DTO de salida que resume el estado global del dashboard de deployments.
+ * DTO de salida que resume el estado del dashboard de deployments.
+ * Soporta métricas globales para administradores y métricas acotadas para técnicos.
  */
 public class DashboardSummaryDTO {
 
@@ -15,4 +16,11 @@ public class DashboardSummaryDTO {
     public long nonCompliant;
     public long pendingCrowdStrike;
     public long pendingMicroClaudia;
+
+    // Métricas analíticas añadidas
+    public Long assignedTechnicians;
+    public Long activeTechnicians;
+    public Double averageDeploymentTimeMinutes;
+    public String lastFailedDeployment;
+    public String lastSecurityWarning;
 }

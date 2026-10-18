@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
+    "createdAt":  "2026-10-02T11:22:45",
+    "sourceScript":  "InstallDrivers.ps1",
+    "payload":  {
+                    "rawOutput":  "Model=HP ProDesk 400 G5 SFF; Total=30; Installed=16; Skipped=0; Errors=14",
+                    "message":  "Drivers installation process completed",
+                    "errorCode":  "DRIVER_INSTALL_ERRORS",
+                    "stepName":  "DRIVER_INSTALLATION",
+                    "stepStatus":  "WARNING"
+                }
+}

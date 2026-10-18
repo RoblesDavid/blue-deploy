@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Repositorio JPA para checks de seguridad asociados a deployments.
@@ -41,4 +42,20 @@ public interface SecurityCheckRepository extends JpaRepository<SecurityCheck, Lo
             @Param("statuses") Collection<CheckStatus> statuses
     );
 
+    @Query("""
+            SELECT COUNT(DISTINCT sc.deployment.id)
+            FROM SecurityCheck sc
+            WHERE sc.checkName = :checkName
+            AND sc.checkStatus IN :statuses
+            AND sc.deployment.technician.username = :username
+            """)
+    long countDistinctDeploymentsByCheckNameAndCheckStatusInAndTechnician(
+            @Param("checkName") String checkName,
+            @Param("statuses") Collection<CheckStatus> statuses,
+            @Param("username") String username
+    );
+
+    Optional<SecurityCheck> findTopByCheckStatusInOrderByReportedAtDesc(Collection<CheckStatus> statuses);
+
+    Optional<SecurityCheck> findTopByDeploymentTechnicianUsernameAndCheckStatusInOrderByReportedAtDesc(String username, Collection<CheckStatus> statuses);
 }

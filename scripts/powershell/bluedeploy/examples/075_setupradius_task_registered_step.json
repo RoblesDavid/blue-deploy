@@ -1,0 +1,14 @@
+﻿{
+    "eventType":  "DEPLOYMENT_STEP",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
+    "createdAt":  "2026-10-02T11:22:50",
+    "sourceScript":  "InstallDrivers.ps1",
+    "payload":  {
+                    "rawOutput":  "TaskName=SetupRadius; Path=C:\\OSDCloud\\Scripts\\SetupComplete\\SetupRadius.ps1; RunAs=System",
+                    "message":  "Next deployment orchestration task successfully registered in system schedule",
+                    "errorCode":  null,
+                    "stepName":  "SETUPRADIUS_TASK_REGISTERED",
+                    "stepStatus":  "SUCCESS"
+                }
+}
