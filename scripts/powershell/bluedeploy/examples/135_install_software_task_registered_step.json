@@ -1,11 +1,11 @@
 ﻿{
     "eventType":  "DEPLOYMENT_STEP",
-    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
-    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
     "createdAt":  "2026-10-02T11:26:57",
     "sourceScript":  "AddComputerToADGroup_WSUS.ps1",
     "payload":  {
-                    "rawOutput":  "TaskName=InstallSoftware; RunAs=TESTICBAZA\\Administrador; LogonType=Interactive; RunLevel=Highest",
+                    "rawOutput":  "TaskName=InstallSoftware; RunAs=TESTICBLUE\\test1; LogonType=Interactive; RunLevel=Highest",
                     "message":  "The next orchestration step task for software deployment was registered successfully",
                     "errorCode":  null,
                     "stepName":  "INSTALL_SOFTWARE_TASK_REGISTERED",

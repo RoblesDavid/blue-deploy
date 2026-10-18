@@ -1,11 +1,11 @@
 ﻿{
     "eventType":  "DEPLOYMENT_STEP",
-    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
-    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
     "createdAt":  "2026-10-02T11:25:02",
     "sourceScript":  "JoinDomain.ps1",
     "payload":  {
-                    "rawOutput":  "Domain [dmsas.sda.sas.junta-andalucia.es] - OUPath [OU:Equipos | OU:AGS-NordesteGranada | OU:Especializada | OU:Granada | DC:dmsas | DC:sda | DC:sas | DC:junta-andalucia | DC:es]",
+                    "rawOutput":  "Domain [dominio.local] - OUPath [OU:Equipos | OU:AGS-NordesteGranada | OU:Especializada | OU:Granada | DC:dominio | DC:local]",
                     "message":  "The computer successfully joined the active directory domain structure",
                     "errorCode":  "",
                     "stepName":  "JOIN_DOMAIN_EXECUTION",

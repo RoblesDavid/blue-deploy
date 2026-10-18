@@ -1,18 +1,22 @@
 # ============================================================
-#  SetupRadius.ps1 - OSD-BlueDeploy Deployment (Sprint 5)
+#  SetupRadius.ps1 - BlueDeploy Deployment
 #  Activa 802.1X / RADIUS en la interfaz cableada.
 #  Debe ejecutarse ANTES de JoinDomain.ps1
 # ============================================================
 
 Write-Host ""
 Write-Host "================================================="
-Write-Host " CONFIGURACION RADIUS / 802.1X - OSD-BlueDeploy"
+Write-Host " CONFIGURACION RADIUS / 802.1X - BLUEDEPLOY"
 Write-Host "================================================="
 Write-Host ""
 
 # -----------------------------------------------------------------------
 # 0. CONFIGURACIÓN DE ARQUITECTURA DE EVIDENCIAS (BLUE DEPLOY)
 # -----------------------------------------------------------------------
+
+$NextScript    = "C:\OSDCloud\Scripts\SetupComplete\JoinDomain.ps1"
+$NextTask      = "JoinDomain"
+$LogFile       = "C:\OSDCloud\Logs\SetupRadius.log"
 
 $QueueFolder = "C:\tmp\BlueDeploy\Queue"
 if (-not (Test-Path $QueueFolder)) {
@@ -25,7 +29,7 @@ if (Test-Path "C:\OSDCloud\ComputerName.txt") {
     $Hostname = (Get-Content "C:\OSDCloud\ComputerName.txt").Trim()
 }
 $CurrentDate  = Get-Date -Format "yyyyMMdd"
-$DeploymentId = "DEPLOY-OSD-BlueDeploy-$Hostname-$CurrentDate"
+$DeploymentId = "DEPLOY-LAB-$Hostname-$CurrentDate"
 
 # Función interna homologada para asegurar el nombre exacto del archivo JSON (3 dígitos)
 function Write-BlueDeployStep {
@@ -55,7 +59,7 @@ function Write-BlueDeployStep {
             "stepName"   = $StepName
             "stepStatus" = $StepStatus
             "message"    = $Message
-            "errorCode"  = $FinalErrorCode  # <--- Usar la variable saneada
+            "errorCode"  = $FinalErrorCode
             "rawOutput"  = $RawOutput
         }
     }
@@ -113,7 +117,7 @@ if ($ServiceErrors.Count -eq 0) {
     Write-BlueDeployStep -StepNumber "080" `
                          -StepName "RADIUS_SERVICES_CONFIG" `
                          -StepStatus "FAILED" `
-                         -Message "Failed to start 802.1X dynamic authentication services" `
+                         -Message "No se pudieron iniciar los servicios dinámicos de autenticación 802.1X" `
                          -ErrorCode "SERVICES_START_FAILURE" `
                          -RawOutput ($RawServiceOutput -join "; ")
 }
@@ -126,35 +130,35 @@ Write-Host ""
 $xmlPath = "C:\OSDCloud\PerfilLAN8021X.xml"
 
 $xmlContent = @'
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <LANProfile xmlns="http://www.microsoft.com/networking/LAN/profile/v1">
-    <name>OSD-BlueDeploy Profile</name>
-    <connectionType>wired</connectionType>
-    <connectionMode>auto</connectionMode>
-    <autoConfig>enabled</autoConfig>
-    <security>
-        <enable8021x>true</enable8021x>
-        <OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
-            <cacheUserData>true</cacheUserData>
-            <authMode>machine</authMode>
-            <EAPConfig>
-                <EapHostConfig xmlns="http://www.microsoft.com/networking/EapHostConfig">
-                    <EapMethod>
-                        <Type xmlns="http://www.microsoft.com/networking/EapCommon">25</Type>
-                        <VendorId xmlns="http://www.microsoft.com/networking/EapCommon">0</VendorId>
-                        <ProgId xmlns="http://www.microsoft.com/networking/EapCommon">Microsoft.EapTeap</ProgId>
-                        <AuthorId xmlns="http://www.microsoft.com/networking/EapCommon">0</AuthorId>
-                    </EapMethod>
-                    <ConfigBlob>000000000400000002000000000000000000000000000000000000000000000001000000000000001900000000000000000000000000000000000000000000000200000003000000000000000000000000000000000000000000000002000000000000001A000000000000000000000000</ConfigBlob>
-                </EapHostConfig>
-            </EAPConfig>
-        </OneX>
-    </security>
+    <MSM>
+        <security>
+            <OneXEnforced>false</OneXEnforced>
+            <OneXEnabled>true</OneXEnabled>
+            <OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
+                <cacheUserData>false</cacheUserData>
+                <authMode>machineOrUser</authMode>
+                <EAPConfig>
+                    <EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig">
+                        <EapMethod>
+                            <Type xmlns="http://www.microsoft.com/provisioning/EapCommon">25</Type>
+                            <VendorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorId>
+                            <VendorType xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorType>
+                            <AuthorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</AuthorId>
+                        </EapMethod>
+                        <ConfigBlob>0100000037000000010000000100000001000000150000001700000000000000000001000000100000001A000000000000000000000000</ConfigBlob>
+                    </EapHostConfig>
+                </EAPConfig>
+            </OneX>
+        </security>
+    </MSM>
 </LANProfile>
 '@
 
 Write-Host "Aplicando perfil LAN 802.1X..."
 try {
+    [xml]$ParsedProfile = $xmlContent
     $xmlContent | Out-File -FilePath $xmlPath -Encoding UTF8 -Force
     $result = netsh lan add profile filename="$xmlPath" 2>&1
 
@@ -174,7 +178,7 @@ try {
         Write-BlueDeployStep -StepNumber "090" `
                              -StepName "RADIUS_PROFILE_APPLICATION" `
                              -StepStatus "FAILED" `
-                             -Message "Netsh refused to add the wired LAN profile layout" `
+                             -Message "Netsh rechazó añadir el perfil de red LAN cableada" `
                              -ErrorCode "NETSH_PROFILE_REJECTED" `
                              -RawOutput "ExitCode=$LASTEXITCODE; Output=$result"
     }
@@ -185,7 +189,7 @@ try {
     Write-BlueDeployStep -StepNumber "090" `
                          -StepName "RADIUS_PROFILE_APPLICATION" `
                          -StepStatus "FAILED" `
-                         -Message "Critical exception occurred during profile file writing or installation" `
+                         -Message "Se produjo una excepción crítica al escribir o instalar el archivo del perfil" `
                          -ErrorCode "RADIUS_PROFILE_EXCEPTION" `
                          -RawOutput "Error=$_"
 } finally {
@@ -196,23 +200,23 @@ try {
 # 3. ELIMINAR ESTA TAREA Y REGISTRAR JOINDOMAIN
 # -----------------------------------------------------------------------
 
-Write-Host ""
+Write-Host "Limpiando tarea actual SetupRadius..."
 schtasks /delete /tn "SetupRadius" /f | Out-Null
 
-Write-Host "Registrando tarea JoinDomain..."
-schtasks /create /tn "JoinDomain" `
-    /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File C:\OSDCloud\Scripts\SetupComplete\JoinDomain.ps1" `
+Write-Host "Registrando la proxima tarea programada: $NextTask"
+schtasks /create /tn $NextTask `
+    /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoExit -File $NextScript" `
     /sc ONLOGON /ru "System" | Out-Null
 
 # [EVIDENCIA 095] Registro del agendamiento exitoso de JoinDomain
 Write-BlueDeployStep -StepNumber "095" `
                      -StepName "JOIN_DOMAIN_TASK_REGISTERED" `
                      -StepStatus "SUCCESS" `
-                     -Message "JoinDomain orchestration task was scheduled successfully" `
-                     -RawOutput "TaskName=JoinDomain; Trigger=ONLOGON; RunAs=System"
+                     -Message "La tarea de orquestación JoinDomain se programó correctamente" `
+                     -RawOutput "TaskName=$NextTask; Path=$NextScript; RunAs=System"
 
 Write-Host ""
 Write-Host "[OK] Proceso terminado. Reiniciando equipo..." -ForegroundColor Green
 Write-Host ""
 
-# Restart-Computer -Force
+Restart-Computer -Force

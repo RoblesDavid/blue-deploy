@@ -1,11 +1,11 @@
 ﻿{
     "eventType":  "DEPLOYMENT_STEP",
-    "deploymentId":  "DEPLOY-AGSNEG-TESTICBAZA-20261002",
-    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBAZA-20261002/steps",
+    "deploymentId":  "DEPLOY-AGSNEG-TESTICBLUE-20261002",
+    "apiPath":  "/api/deployments/DEPLOY-AGSNEG-TESTICBLUE-20261002/steps",
     "createdAt":  "2026-10-02T11:26:51",
     "sourceScript":  "AddComputerToADGroup_WSUS.ps1",
     "payload":  {
-                    "rawOutput":  "Group=GR40_GG_WSUS_W10_PRO; ComputerSAM=TESTICBAZA$; ComputerDN=CN=TESTICBAZA,OU=Equipos,OU=AGS-NordesteGranada,OU=Especializada,OU=Granada,DC=dmsas,DC=sda,DC=sas,DC=junta-andalucia,DC=es",
+                    "rawOutput":  "Group=GR40_GG_WSUS_W10_PRO; ComputerSAM=TESTICBLUE$; ComputerDN=CN=TESTICBLUE,OU=Equipos,OU=AGS-NordesteGranada,OU=Especializada,OU=Granada,DC=dominio,DC=local",
                     "message":  "The computer object was successfully added to the designated WSUS AD Target Group",
                     "errorCode":  null,
                     "stepName":  "AD_GROUP_MEMBERSHIP_MANAGEMENT",
